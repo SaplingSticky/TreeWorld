@@ -1,0 +1,431 @@
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Caveat:wght@400;600&family=Great+Vibes&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#a8895a;
+  background-image:
+    radial-gradient(ellipse at 15% 25%,rgba(255,255,255,0.06) 0%,transparent 50%),
+    radial-gradient(ellipse at 85% 75%,rgba(0,0,0,0.08) 0%,transparent 50%),
+    repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(0,0,0,0.025) 6px,rgba(0,0,0,0.025) 7px),
+    repeating-linear-gradient(-45deg,transparent,transparent 6px,rgba(0,0,0,0.018) 6px,rgba(0,0,0,0.018) 7px);
+  min-height:100vh;
+  padding:32px 28px 48px;
+  font-family:'Lora',Georgia,serif;
+}
+
+/* ── CANVAS DOTS ── */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:radial-gradient(circle,rgba(80,55,20,0.25) 1px,transparent 1px);
+  background-size:24px 24px;
+  pointer-events:none;
+  z-index:0;
+}
+
+.canvas{position:relative;z-index:1;}
+
+/* ── LAYOUT ── */
+.row{display:flex;gap:28px;margin-bottom:28px;align-items:flex-start;flex-wrap:wrap;}
+.col{display:flex;flex-direction:column;gap:28px;}
+
+/* ── BLOCK LABEL ── */
+.blabel{
+  font-family:'Special Elite',monospace;
+  font-size:9px;color:rgba(255,255,255,0.38);
+  letter-spacing:0.1em;text-transform:uppercase;
+  margin-bottom:7px;display:block;
+}
+
+/* ══ MD BLOCK ══ */
+.md-wrap{position:relative;}
+.md-wrap::before{
+  content:'';position:absolute;inset:0;
+  background:#dfd6be;border-radius:3px 4px 2px 3px;
+  transform:rotate(2.2deg) translate(5px,6px);z-index:0;
+  box-shadow:1px 2px 8px rgba(0,0,0,0.2);
+}
+.md-wrap::after{
+  content:'';position:absolute;inset:0;
+  background:#e8e0ca;border-radius:2px 3px 3px 2px;
+  transform:rotate(-1.4deg) translate(-3px,3px);z-index:0;
+  box-shadow:1px 2px 6px rgba(0,0,0,0.14);
+}
+.md-inner{
+  position:relative;z-index:1;
+  background:#f8f3e6;
+  border-radius:2px 3px 2px 4px;
+  padding:18px 20px 22px;
+  box-shadow:2px 4px 14px rgba(0,0,0,0.24);
+  border-top:3px solid #c4b494;
+  width:260px;
+  overflow:hidden;
+}
+.md-lines{
+  position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background-image:repeating-linear-gradient(
+    to bottom,transparent,transparent 23px,#ddd5be 23px,#ddd5be 24px);
+  background-position:0 50px;
+}
+.md-tag{font-family:'Special Elite',monospace;font-size:9px;color:#9a8060;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:7px;display:block;}
+.md-title{font-family:'Lora',serif;font-size:15px;font-weight:600;color:#2e2010;margin-bottom:9px;line-height:1.3;}
+.md-body{font-family:'Lora',serif;font-size:12px;color:#5a4530;line-height:1.75;}
+.md-body p{margin-bottom:7px;}
+
+/* ══ NOTE BLOCK ══ */
+.note-wrap{position:relative;width:190px;}
+.note-inner{
+  background:#fff176;
+  padding:16px 16px 20px;
+  box-shadow:3px 5px 16px rgba(0,0,0,0.28);
+  clip-path:polygon(0% 7px,4px 2px,8px 6px,14px 1px,20px 5px,27px 0%,34px 3px,100% 0%,100% 100%,0% 100%);
+  background-image:repeating-linear-gradient(to bottom,transparent,transparent 23px,rgba(0,0,0,0.055) 23px,rgba(0,0,0,0.055) 24px);
+}
+.note-rot{transform:rotate(-2.6deg);transform-origin:top left;}
+.note-pin{position:absolute;top:-11px;left:16px;width:20px;height:20px;z-index:2;}
+.note-title{font-family:'Caveat',cursive;font-size:17px;font-weight:600;color:#5c4a00;margin-bottom:7px;}
+.note-body{font-family:'Caveat',cursive;font-size:14px;color:#7a6200;line-height:1.65;}
+
+/* ══ POLAROID ══ */
+.pol-wrap{position:relative;}
+.pol-rot-a{transform:rotate(3.2deg);transform-origin:top center;}
+.pol-rot-b{transform:rotate(-1.8deg);transform-origin:top center;}
+.pol-inner{
+  background:#fdfaf4;padding:9px 9px 52px;
+  box-shadow:4px 7px 20px rgba(0,0,0,0.32),inset 0 0 0 0.5px rgba(0,0,0,0.07);
+  border-radius:1px;width:180px;position:relative;
+}
+.pol-img{
+  width:100%;height:140px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:44px;border-radius:1px;position:relative;overflow:hidden;
+}
+.pol-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom right,rgba(255,255,255,0.13) 0%,transparent 55%);pointer-events:none;}
+.pol-img-a{background:#c8b898;}
+.pol-img-b{background:#98b4c8;}
+.pol-caption-area{position:absolute;bottom:0;left:0;right:0;height:52px;display:flex;align-items:flex-end;justify-content:flex-end;padding:0 12px 10px;}
+.pol-caption{font-family:'Great Vibes',cursive;font-size:19px;color:#5a4838;text-align:right;line-height:1.2;}
+.pol-pin{position:absolute;top:-12px;left:50%;transform:translateX(-50%);width:20px;height:20px;z-index:2;}
+
+/* ══ SVG BLOCK ══ */
+.svg-outer{
+  background:#eef2f8;
+  background-image:
+    linear-gradient(rgba(170,195,225,0.45) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(170,195,225,0.45) 1px,transparent 1px);
+  background-size:20px 20px;
+  border:1px solid #b8cce0;border-radius:4px;
+  box-shadow:2px 3px 12px rgba(0,0,0,0.16);
+  overflow:hidden;width:240px;
+}
+.svg-bar{background:#3a62a0;padding:7px 12px;display:flex;align-items:center;gap:7px;}
+.svg-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.55);}
+.svg-bar-label{font-family:'Special Elite',monospace;font-size:10px;color:rgba(255,255,255,0.82);letter-spacing:0.09em;text-transform:uppercase;}
+.svg-body{padding:16px;display:flex;align-items:center;justify-content:center;}
+
+/* ══ HTML / CRT ══ */
+.crt-outer{
+  background:#ece7de;
+  background-image:repeating-linear-gradient(to bottom,transparent,transparent 1px,rgba(0,0,0,0.013) 1px,rgba(0,0,0,0.013) 2px);
+  border:2px solid #bdb5a5;border-radius:12px;
+  padding:12px 12px 9px;
+  box-shadow:3px 6px 20px rgba(0,0,0,0.38),inset 0 1px 0 rgba(255,255,255,0.48);
+  width:240px;
+}
+.crt-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.crt-brand{font-family:'Special Elite',monospace;font-size:10px;color:#8a8070;letter-spacing:0.11em;text-transform:uppercase;}
+.crt-knobs{display:flex;gap:7px;}
+.crt-knob{
+  width:15px;height:15px;border-radius:50%;
+  background:#3a3530;
+  border:1px solid #1a1510;
+  box-shadow:1px 1px 3px rgba(0,0,0,0.45),inset 0 0 0 2px rgba(255,255,255,0.05);
+  position:relative;
+}
+.crt-knob::after{content:'';position:absolute;top:50%;left:50%;width:1.5px;height:6px;background:rgba(255,255,255,0.35);transform:translate(-50%,-50%) rotate(25deg);border-radius:1px;}
+.crt-screen-wrap{background:#181816;border-radius:8px;padding:7px;box-shadow:inset 0 2px 14px rgba(0,0,0,0.75),0 0 0 1px #090907;}
+.crt-screen{
+  background:#0c180c;border-radius:5px;min-height:120px;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:5px;
+  font-family:'Special Elite',monospace;font-size:12px;
+  color:#72d272;letter-spacing:0.04em;
+  text-shadow:0 0 5px rgba(114,210,114,0.45);
+  position:relative;overflow:hidden;
+}
+.crt-screen::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(to bottom,transparent,transparent 2px,rgba(0,0,0,0.14) 2px,rgba(0,0,0,0.14) 3px);pointer-events:none;}
+.crt-sub{font-size:9px;color:#4a9a4a;letter-spacing:0.1em;text-transform:uppercase;}
+.crt-grille{margin-top:7px;height:9px;background:repeating-linear-gradient(to right,#bdb5a5 0px,#bdb5a5 3px,#ada89a 3px,#ada89a 4px);border-radius:2px;opacity:0.55;}
+
+/* ══ COLLECTION ══ */
+.coll-outer{
+  background:#be924e;
+  background-image:
+    radial-gradient(ellipse at 25% 35%,rgba(255,255,255,0.07) 0%,transparent 55%),
+    radial-gradient(ellipse at 75% 65%,rgba(0,0,0,0.07) 0%,transparent 55%),
+    repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,0.018) 3px,rgba(0,0,0,0.018) 4px);
+  border:3px solid #7a5c10;border-radius:8px;
+  padding:14px 16px 20px;
+  box-shadow:2px 4px 18px rgba(0,0,0,0.38),inset 0 1px 0 rgba(255,255,255,0.13);
+}
+.coll-label-tag{
+  display:inline-block;background:#3e2600;color:#f0ddb0;
+  font-family:'Lora',serif;font-size:11px;font-weight:600;
+  letter-spacing:0.05em;padding:5px 16px 5px 10px;margin-bottom:14px;
+  clip-path:polygon(0% 0%,calc(100% - 9px) 0%,100% 50%,calc(100% - 9px) 100%,0% 100%);
+}
+.coll-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;}
+.child-card{
+  background:#f6f1e4;border-radius:2px;padding:12px 14px;
+  font-family:'Lora',serif;font-size:12px;color:#3e2c18;
+  box-shadow:2px 3px 10px rgba(0,0,0,0.28);
+  position:relative;border-top:3px solid #c4b494;
+}
+.child-type{font-family:'Special Elite',monospace;font-size:9px;color:#9a8060;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;}
+.child-title{font-weight:600;font-size:12px;color:#1e1006;margin-bottom:5px;}
+.child-body{font-size:11px;color:#6a5540;line-height:1.55;}
+.child-pin{position:absolute;top:-9px;right:14px;width:16px;height:16px;}
+
+/* ══ CHAT ══ */
+.chat-antenna{width:3px;height:26px;background:#6a6460;border-radius:2px;margin:0 auto;margin-bottom:-1px;}
+.chat-outer{
+  background:#3e3c38;border-radius:10px 10px 8px 8px;
+  box-shadow:3px 5px 18px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.07);
+  overflow:hidden;border:1.5px solid #222018;width:230px;
+}
+.chat-head{background:#302e2a;padding:7px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e1c18;}
+.chat-head-title{font-family:'Special Elite',monospace;font-size:10px;color:#72d272;letter-spacing:0.1em;text-transform:uppercase;text-shadow:0 0 5px rgba(114,210,114,0.38);}
+.chat-dot{width:7px;height:7px;border-radius:50%;background:#72d272;box-shadow:0 0 5px rgba(114,210,114,0.6);}
+.chat-msgs{padding:10px 12px;display:flex;flex-direction:column;gap:9px;min-height:130px;}
+.msg{max-width:82%;padding:7px 10px;border-radius:10px;font-size:12px;line-height:1.5;}
+.msg-u{align-self:flex-end;background:#524e48;color:#e0d8c8;font-family:'Caveat',cursive;font-size:13px;border-radius:10px 10px 2px 10px;}
+.msg-a{align-self:flex-start;background:#162016;color:#72d272;font-family:'Special Elite',monospace;font-size:10px;letter-spacing:0.03em;border-radius:10px 10px 10px 2px;text-shadow:0 0 4px rgba(114,210,114,0.28);}
+.chat-input{background:#201e1a;padding:7px 10px;display:flex;align-items:center;gap:7px;border-top:1px solid #141210;}
+.chat-input-mock{flex:1;background:#141210;border-radius:12px;height:26px;border:1px solid #302e2a;}
+.chat-send{width:26px;height:26px;border-radius:50%;background:#3a6a3a;display:flex;align-items:center;justify-content:center;font-size:11px;color:#90e090;flex-shrink:0;}
+.chat-grille{height:7px;background:repeating-linear-gradient(to right,#302e2a 0px,#302e2a 4px,#201e1a 4px,#201e1a 5px);}
+
+/* ── PIN SVG REUSE ── */
+</style>
+
+<div class="canvas">
+
+  <!-- ROW 1: MD + NOTE + POLAROID pair -->
+  <div class="row">
+
+    <!-- MD -->
+    <div>
+      <span class="blabel">MD 块</span>
+      <div class="md-wrap">
+        <div class="md-inner">
+          <div class="md-lines"></div>
+          <span class="md-tag">研究笔记</span>
+          <div class="md-title">K线的起源与历史</div>
+          <div class="md-body">
+            <p>K线图起源于18世纪日本米市，由本间宗久发明，用以记录每日开盘、收盘、最高与最低价格。</p>
+            <p>1990年代由史蒂夫·尼森引入西方市场，成为全球技术分析的核心工具。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTE -->
+    <div>
+      <span class="blabel">便签块</span>
+      <div class="note-wrap note-rot">
+        <svg class="note-pin" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="9" r="6.5" fill="#8B3A3A" stroke="#5a2020" stroke-width="1"/>
+          <circle cx="8.5" cy="7.5" r="2.2" fill="rgba(255,255,255,0.22)"/>
+          <line x1="10" y1="15.5" x2="10" y2="20" stroke="#5a2020" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <div class="note-inner">
+          <div class="note-title">⚠ 注意</div>
+          <div class="note-body">K线只反映价格行为，<br>不能单独预测走势！<br>需配合成交量分析。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POLAROID A -->
+    <div>
+      <span class="blabel">图片块</span>
+      <div class="pol-wrap pol-rot-a">
+        <svg class="pol-pin" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="9" r="6.5" fill="#8B3A3A" stroke="#5a2020" stroke-width="1"/>
+          <circle cx="8.5" cy="7.5" r="2.2" fill="rgba(255,255,255,0.22)"/>
+          <line x1="10" y1="15.5" x2="10" y2="20" stroke="#5a2020" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <div class="pol-inner">
+          <div class="pol-img pol-img-a">🕯️</div>
+          <div class="pol-caption-area">
+            <span class="pol-caption">典型阳线</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POLAROID B -->
+    <div style="margin-top:32px;">
+      <div class="pol-wrap pol-rot-b">
+        <svg class="pol-pin" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="9" r="6.5" fill="#3A5A8B" stroke="#20405a" stroke-width="1"/>
+          <circle cx="8.5" cy="7.5" r="2.2" fill="rgba(255,255,255,0.22)"/>
+          <line x1="10" y1="15.5" x2="10" y2="20" stroke="#20405a" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <div class="pol-inner">
+          <div class="pol-img pol-img-b">🌊</div>
+          <div class="pol-caption-area">
+            <span class="pol-caption">Mar · 2024</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div>
+      <span class="blabel">聊天框</span>
+      <div class="chat-antenna"></div>
+      <div class="chat-outer">
+        <div class="chat-head">
+          <span class="chat-head-title">▸ Agent 频道</span>
+          <div class="chat-dot"></div>
+        </div>
+        <div class="chat-msgs">
+          <div class="msg msg-u">帮我学习K线基础</div>
+          <div class="msg msg-a">已规划 5 个模块，确认后执行。</div>
+          <div class="msg msg-u">确认，开始生成</div>
+          <div class="msg msg-a">✓ 集合框创建中...</div>
+        </div>
+        <div class="chat-input">
+          <div class="chat-input-mock"></div>
+          <div class="chat-send">▶</div>
+        </div>
+        <div class="chat-grille"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 2: SVG + HTML/CRT -->
+  <div class="row">
+
+    <!-- SVG -->
+    <div>
+      <span class="blabel">SVG 块</span>
+      <div class="svg-outer">
+        <div class="svg-bar">
+          <div class="svg-dot"></div>
+          <span class="svg-bar-label">图解 · K线构成</span>
+        </div>
+        <div class="svg-body">
+          <svg viewBox="0 0 220 155" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+            <line x1="110" y1="18" x2="110" y2="46" stroke="#c0503a" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <rect x="84" y="46" width="52" height="70" rx="1" fill="#e07060" stroke="#c0503a" stroke-width="1.5"/>
+            <line x1="110" y1="116" x2="110" y2="140" stroke="#c0503a" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <text x="138" y="28" font-family="Special Elite,monospace" font-size="9" fill="#3a5a90">上影线</text>
+            <line x1="136" y1="26" x2="113" y2="28" stroke="#3a5a90" stroke-width="0.7"/>
+            <text x="138" y="58" font-family="Special Elite,monospace" font-size="9" fill="#3a5a90">开盘价</text>
+            <line x1="136" y1="56" x2="136" y2="58" stroke="#3a5a90" stroke-width="0.7"/>
+            <text x="138" y="106" font-family="Special Elite,monospace" font-size="9" fill="#3a5a90">收盘价</text>
+            <line x1="136" y1="104" x2="136" y2="116" stroke="#3a5a90" stroke-width="0.7"/>
+            <text x="138" y="134" font-family="Special Elite,monospace" font-size="9" fill="#3a5a90">下影线</text>
+            <line x1="136" y1="132" x2="113" y2="135" stroke="#3a5a90" stroke-width="0.7"/>
+            <text x="20" y="82" font-family="Special Elite,monospace" font-size="11" fill="#c0503a" font-weight="bold">阴线</text>
+            <text x="16" y="95" font-family="Special Elite,monospace" font-size="8" fill="#a06050">Bearish</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- CRT -->
+    <div>
+      <span class="blabel">HTML 块</span>
+      <div class="crt-outer">
+        <div class="crt-top">
+          <span class="crt-brand">TreeWorld · HTML</span>
+          <div class="crt-knobs">
+            <div class="crt-knob"></div>
+            <div class="crt-knob"></div>
+            <div class="crt-knob"></div>
+          </div>
+        </div>
+        <div class="crt-screen-wrap">
+          <div class="crt-screen">
+            <span class="crt-sub">交互组件已载入</span>
+            <span style="font-size:14px;letter-spacing:0.04em;">K线形态演示</span>
+            <span style="font-size:9px;color:#4a9a4a;margin-top:3px;letter-spacing:0.03em;">锤子线 · 吞没 · 十字星</span>
+          </div>
+        </div>
+        <div class="crt-grille"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 3: COLLECTION (full width) -->
+  <div>
+    <span class="blabel">集合框</span>
+    <div class="coll-outer">
+      <div class="coll-label-tag">K线基础学习</div>
+      <div class="coll-grid">
+
+        <div class="child-card">
+          <svg class="child-pin" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="7" r="5" fill="#8B3A3A" stroke="#5a2020" stroke-width="0.8"/>
+            <circle cx="6.5" cy="5.5" r="1.8" fill="rgba(255,255,255,0.2)"/>
+            <line x1="8" y1="12" x2="8" y2="16" stroke="#5a2020" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <div class="child-type">MD 块</div>
+          <div class="child-title">K线的起源与历史</div>
+          <div class="child-body">18世纪日本米市，本间宗久发明，记录四价维度。</div>
+        </div>
+
+        <div class="child-card">
+          <svg class="child-pin" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="7" r="5" fill="#3A6A8B" stroke="#20405a" stroke-width="0.8"/>
+            <circle cx="6.5" cy="5.5" r="1.8" fill="rgba(255,255,255,0.2)"/>
+            <line x1="8" y1="12" x2="8" y2="16" stroke="#20405a" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <div class="child-type">SVG 块</div>
+          <div class="child-title">K线结构图解</div>
+          <div class="child-body">实体、上下影线、阴阳线可视化解构。</div>
+        </div>
+
+        <div class="child-card">
+          <svg class="child-pin" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="7" r="5" fill="#5A7A3A" stroke="#305a20" stroke-width="0.8"/>
+            <circle cx="6.5" cy="5.5" r="1.8" fill="rgba(255,255,255,0.2)"/>
+            <line x1="8" y1="12" x2="8" y2="16" stroke="#305a20" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <div class="child-type">HTML 块</div>
+          <div class="child-title">形态交互演示</div>
+          <div class="child-body">锤子线、吞没形态、十字星点击查看详解。</div>
+        </div>
+
+        <div class="child-card">
+          <svg class="child-pin" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="7" r="5" fill="#7A5A3A" stroke="#5a4020" stroke-width="0.8"/>
+            <circle cx="6.5" cy="5.5" r="1.8" fill="rgba(255,255,255,0.2)"/>
+            <line x1="8" y1="12" x2="8" y2="16" stroke="#5a4020" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <div class="child-type">便签块</div>
+          <div class="child-title">注意事项</div>
+          <div class="child-body">K线需配合量能与趋势，不可单独使用。</div>
+        </div>
+
+        <div class="child-card">
+          <svg class="child-pin" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="7" r="5" fill="#6A3A8B" stroke="#3a205a" stroke-width="0.8"/>
+            <circle cx="6.5" cy="5.5" r="1.8" fill="rgba(255,255,255,0.2)"/>
+            <line x1="8" y1="12" x2="8" y2="16" stroke="#3a205a" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <div class="child-type">图片块</div>
+          <div class="child-title">实盘截图参考</div>
+          <div class="child-body">真实行情中的经典K线形态收集。</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>

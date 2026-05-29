@@ -1,0 +1,82 @@
+17:14 阅读 documents 中的项目文档，确认 TreeWorld 当前处于 MVP 阶段一
+17:18 修复 MarkdownBlock 双击无法进入编辑的问题
+17:23 增强 MD 块的 Markdown 视觉样式，让标题、列表、引用、代码有明显区分
+17:27 为 MD 块增加右下角拖拽缩放能力
+17:31 为 MD 块增加待办列表渲染和点击勾选能力
+17:35 为 MD 块正文编辑增加圆括号和方括号自动补全
+17:40 修复独立括号行按 Enter 无法展开换行的问题
+17:44 修复 Markdown 阅读态普通换行被压缩的问题
+# 2026-5-13
+22:27 复查阶段一成果，确认 build、lint 和浏览器冒烟检查通过
+22:27 开始阶段二制作，安装 @anthropic-ai/sdk 并补充 .env.example 与 .gitignore
+22:27 新增 Agent 系统提示词、Claude API 调用、画布命令执行器和画布上下文生成
+22:27 新增浮动输入框，支持 / 与 Ctrl/Cmd+K 唤起、Enter 发送、Escape 关闭
+22:27 为画布增加 Agent 思考中状态和 API 缺失时的错误便签反馈
+22:37 增加页面内 Settings 设置面板，用 localStorage 保存 Anthropic API Key
+22:37 改造 Agent 调用逻辑，不再依赖 .env 文件读取 API Key
+22:37 验证 Settings 保存、清除和未配置时的画布错误便签反馈
+22:50 安装 OpenAI SDK，并将 Agent 调用改为 Anthropic/OpenAI 可选 Provider
+22:50 Settings 增加 Provider、API Key 和 Base URL 配置，方便接入 OpenAI-compatible LLM
+22:50 将 Settings、MD 块、Note 块入口移动到左下角，改为三个圆形竖向工具按钮
+23:00 调整工具入口布局，Settings 保持左下角，MD 块和 Note 块移动到左上角
+23:03 Settings 增加 Model ID 配置，并让 Anthropic/OpenAI 调用使用页面内模型设置
+23:24 增加 Agent 输入输出日志，记录到 localStorage 并输出 console.info 方便 harness 调试
+23:24 新增 documents/ai-io-log.md，说明 AI IO 日志字段、读取方式和清理方式
+23:35 开始阶段三，新增锁定、集合框、图片块和扩展后的画布命令协议
+23:35 更新 Agent prompt，使其支持 collection、image、group、lock 等阶段三指令
+23:35 验证 Agent 成功创建番茄工作法调研集合，包含多个 Markdown 块和图片块
+23:44 修复集合框未完整圈住子块的问题，group 后按子块外接矩形自动扩展 collection
+00:01 最终复查阶段一、阶段二、阶段三完成度，确认 lint、build 和浏览器冒烟检查通过
+00:12 增加 HTML 块，支持左上角手动创建和 Agent 创建，并用 sandbox iframe 隔离渲染
+# 2026-5-14
+03:30 完成 D1 地基版，多画布首页、本地自动保存、JSON 导入导出和摘要缩略图通过冒烟检查
+03:36 参考 awesome-design-md 的 Miro 设计系统，重做首页为白板风格 UI 并统一画布顶部工具条
+03:39 将主题改为红色 Matrix 01 瀑布风格，统一首页、卡片和画布工具按钮的黑红视觉
+03:44 将黑红主题调整为红白主题，保留 01 代码雨元素但整体改为明亮白底红色强调
+03:50 完成 A1 Plan→Confirm→Execute 基础流，Agent 先出规划卡片，确认后再执行画布命令
+04:02 完成 A2 网页搜索基础能力，Settings 增加 Tavily Key，Agent 可在规划前搜索并复用来源上下文
+04:12 完成 A3 SVG 块，支持手动创建、Agent 规划/执行生成、画布渲染和首页摘要统计
+04:30 完成 B1 文字自适应高度，MD/Note 支持 auto/manual 高度、手动 resize 和标题栏双击恢复自动高度
+19:12 修复自动高度后的排版联动，Agent 批量创建改为两列防重叠布局，集合块跟随子块尺寸重算，手动新增块扫描空位
+19:12 补强真实高度后的二次避让，Agent 生成块写入布局组 ID，旧 Agent 根级块和集合内块发生重叠时自动按真实尺寸重排
+19:20 完成 B2 浮于画布的聊天框，用户消息、AI 规划、确认执行、修改规划和执行结果统一进入右下角对话流
+19:47 修复 B2 聊天框唤起和空闲隐藏，支持画布内按 / 或 Ctrl/Cmd+K 呼出，空闲后淡出并卸载
+20:00 完成 B3 实物化 UI 第一版，MD 纸张、便签、软木集合框、SVG 白板、HTML 设备框、图片拍立得，并修复手动连续创建块的可视区域排布
+02:15 按新版 Roadmap 升级 B3，增加软木/皮革/亚麻画布主题、Google Fonts、叠层纸页、手撕便签、CRT HTML、制图纸 SVG、拍立得图片和对讲机聊天框
+02:30 参考旧纸框、拍立得和 CRT 图片二次打磨 B3，默认浅色亚麻主题，重做 MD 纸框、便签、拍立得图片、HTML 电视机控制区和聊天框色调
+02:54 参考 treeworld_full_ui.html 统一 UI 语言，改为浅棕桌面拼贴、线稿纸 MD、图钉便签/拍立得、蓝图纸 SVG、轻 CRT HTML、对讲机聊天框和纸质首页卡片
+02:58 按反馈恢复首页视觉不变，画布背景改回白色点阵，仅保留块皮肤和聊天框的参考稿风格
+03:03 进一步回退画布 chrome 到类 Miro 风格，恢复浅白灰点阵、红白顶部栏和左侧工具按钮，块 UI 不变
+03:06 加深画布点阵网格并放到 CSS 末尾，确保类 Miro 网格可见且不影响块 UI
+
+# 2026-5-28
+14:00 完成 B4 块操作菜单，单击标题栏弹出锁定/复制/删除/置顶菜单，4px 拖拽阈值区分点击和拖动
+14:00 新增 BlockMenu 组件、useBlockClickDrag hook，store 新增 duplicateBlock/bringToFront/clearFrontBlock
+14:00 为所有 6 个块组件（Markdown/Note/HTML/SVG/Image/Collection）集成菜单
+14:15 完成 C3 代码块，支持 highlight.js 语法高亮、语言选择器、一键复制、暗色主题
+14:30 完成 C2 表格块，支持 JSON 数据存储、单元格编辑、列排序、添加行列
+14:45 完成 C1 链接预览块，支持 URL 解析、域名/favicon 显示、点击跳转、Agent 可填充 OG 数据
+15:00 完成 D2 撤销重做，Cmd+Z 撤销/Cmd+Shift+Z 重做，50 步历史记录
+15:15 完成 D3 本地模型接入，Settings 新增 Ollama 供应商选项，默认地址 localhost:11434/v1
+15:15 所有变更通过 tsc + vite build + eslint 验证
+# 2026-5-29
+10:00 修复标题栏点击导致白屏的问题，将 titleBarMouseDown 中的 setIsDragging 改为仅设置 titleBarDownRef，handleMouseUp 检查 titleBarDownRef 直接打开菜单
+10:00 修复撤销不能撤销创建块的问题，toggleLock 增加 undoStack 记录
+10:00 修复表格块最后一列无法编辑，增加 paddingRight/paddingBottom 避开 resize 手柄
+10:00 移除所有块上的 BlockLockButton，锁定功能统一由块操作菜单控制
+10:00 重做链接预览块为 iframe URL 查看器，支持直接输入 URL 嵌入网页，双击地址栏编辑
+10:00 扩充 Settings 面板，Ollama 供应商加入选择器数组，新增快捷键参考面板
+# 2026-5-29 (round 2)
+11:00 修复标题栏点击白屏，改为 isPendingClick ref 模式：mousedown 设 isPendingClick=true，mousemove 超 5px 阈值后才设 isDragging=true 并清除 pending，mouseup 检查 isPendingClick 决定开菜单。修复全部 9 个块组件
+11:00 修复撤销快捷键大小写问题，Cmd+Shift+Z 的 e.key 在部分平台为大写 Z，改为 e.key.toLowerCase() 比较
+11:00 表格块增加 tableLayout: fixed 防止列溢出，resize 手柄增至 24px 并加 zIndex:5
+# 2026-5-29 (round 3)
+13:00 彻底重写块标题栏点击交互：放弃 isPendingClick/titleBarDownRef 方案，改用 window-level mousemove/mouseup 监听器。mousedown 记录起点并注册 window 事件，mousemove 超 4px 阈值触发拖拽，mouseup 判断是否点击并开菜单，最后清理监听器。彻底避免 React 事件冒泡问题
+13:00 增加 ErrorBoundary 组件，捕获 React 渲染错误，显示错误信息和重新加载按钮，避免白屏死机
+13:00 清理所有块组件中残留的 isPendingClick/titleBarDownRef 引用
+# 2026-5-29 (round 4 - verified)
+15:00 用 Playwright 自动化测试验证所有 6 个问题修复
+15:00 标题栏点击白屏根因：BlockMenu useEffect 调用 bringToFront 触发无限重渲染（Maximum update depth exceeded）。修复：用 useRef 确保只调用一次，用 getState() 直接访问 store 避免订阅循环
+15:00 Settings Ollama 按钮不可见根因：按钮文本三元表达式只处理了 anthropic/openai，ollama 分支回退显示为 OpenAI。修复：添加 provider === 'ollama' ? 'Ollama' 分支
+15:00 增加 ErrorBoundary 组件防止白屏死机
+15:00 全部 6 项通过自动化测试：菜单可见、撤销生效、表格编辑、锁按钮已移除、链接 iframe、Ollama 按钮可见
