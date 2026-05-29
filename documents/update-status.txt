@@ -88,3 +88,8 @@
 16:00 Home 页增加画布名称搜索功能，支持实时过滤和结果计数
 16:00 Settings 面板新增 Agent IO 日志查看器，可展开查看最近 100 条 API 调用记录
 16:00 全部变更通过 tsc + vite build + eslint 验证
+# 2026-5-29 (round 6 - UX fixes)
+17:00 修复 Html/Svg/Code/Table/Link 块无法从内容区域拖拽的问题，外层 div 增加 onMouseDown
+17:00 重新设计 BubbleBlock 为聊天气泡样式：三角指针、Indigo 配色、自动缩放、无标题栏
+17:00 Settings 面板重构为 4 页签布局：API 配置、画布、快捷键、日志
+17:00 Home 页搜索移入导航栏，增加搜索图标和清除按钮
