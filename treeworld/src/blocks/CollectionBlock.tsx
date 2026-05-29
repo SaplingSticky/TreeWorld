@@ -16,6 +16,7 @@ const CollectionBlock: React.FC<CollectionBlockProps> = ({ block }) => {
   const frontBlockId = useCanvasStore((s) => s.frontBlockId)
   const zIndex = isMenuOpen || frontBlockId === block.id ? 999 : isDragging ? 900 : 0
   const cursor = block.locked ? 'default' : isDragging ? 'grabbing' : 'grab'
+  const userSelect = isDragging ? ('none' as const) : undefined
 
   return (
     <div
@@ -31,6 +32,7 @@ const CollectionBlock: React.FC<CollectionBlockProps> = ({ block }) => {
         backgroundColor: 'rgba(200, 168, 122, 0.54)',
         color: '#3f2a15',
         cursor,
+        userSelect,
         zIndex,
         pointerEvents: 'auto',
         boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.24), 0 18px 34px rgba(63, 42, 21, 0.12)',

@@ -68,7 +68,7 @@ function highlightCode(content: string, language: string): string {
 
 const CodeBlock: React.FC<CodeBlockProps> = ({ block }) => {
   const updateBlock = useCanvasStore((s) => s.updateBlock)
-  const { titleBarMouseDown, handleResizeMouseDown, isMenuOpen, zIndex, cursor, closeMenu } =
+  const { titleBarMouseDown, handleResizeMouseDown, isMenuOpen, zIndex, cursor, userSelect, closeMenu } =
     useBlockInteractions(block, { minWidth: 260, minHeight: 180 })
 
   const [isEditing, setIsEditing] = useState(false)
@@ -129,6 +129,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ block }) => {
         backgroundColor: '#1e1e2e',
         boxShadow: '0 18px 36px rgba(15, 23, 42, 0.28)',
         cursor,
+        userSelect,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',

@@ -11,7 +11,7 @@ interface ImageBlockProps {
 
 const ImageBlock: React.FC<ImageBlockProps> = ({ block }) => {
   const updateBlock = useCanvasStore((s) => s.updateBlock)
-  const { titleBarMouseDown, isMenuOpen, zIndex, cursor, closeMenu } =
+  const { titleBarMouseDown, isMenuOpen, zIndex, cursor, userSelect, closeMenu } =
     useBlockInteractions(block)
 
   const [hasError, setHasError] = useState(false)
@@ -39,6 +39,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ block }) => {
         backgroundColor: '#ffffff',
         boxShadow: '3px 5px 12px rgba(0,0,0,0.25)',
         cursor,
+        userSelect,
         overflow: 'visible',
         transform: `rotate(${rotation}deg)`,
         transformOrigin: '50% 18%',

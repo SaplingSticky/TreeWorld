@@ -121,6 +121,7 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
   // ── Derived values ──
   const zIndex = isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1
   const cursor = block.locked ? 'default' : isResizing ? 'nwse-resize' : isDragging ? 'grabbing' : 'grab'
+  const userSelect = isDragging || isResizing ? ('none' as const) : undefined
 
   const closeMenu = () => {
     setIsMenuOpen(false)
@@ -134,6 +135,7 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
     isMenuOpen,
     zIndex,
     cursor,
+    userSelect,
     // Handlers
     titleBarMouseDown,
     handleResizeMouseDown,

@@ -245,6 +245,7 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
 
   const zIndex = isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1
   const cursor = block.locked ? 'default' : isResizing ? 'nwse-resize' : isDragging ? 'grabbing' : isEditing ? 'default' : 'grab'
+  const userSelect = isDragging || isResizing ? ('none' as const) : undefined
 
   return (
     <div
@@ -254,7 +255,7 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
         backgroundColor: '#F5F0E8', borderRadius: '2px 3px 2px 4px',
         boxShadow: block.locked ? '-2px 0 4px rgba(127, 29, 29, 0.2), 0 18px 34px rgba(31, 10, 16, 0.13)' : '-2px 0 4px rgba(0,0,0,0.08), 0 18px 34px rgba(31, 10, 16, 0.13)',
         border: block.locked ? '2px solid #7f1d1d' : '1px solid #ded4c1',
-        cursor, zIndex, display: 'flex', flexDirection: 'column', overflow: 'visible',
+        cursor, userSelect, zIndex, display: 'flex', flexDirection: 'column', overflow: 'visible',
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}

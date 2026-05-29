@@ -26,7 +26,7 @@ function getDomain(url: string): string {
 
 const LinkBlock: React.FC<LinkBlockProps> = ({ block }) => {
   const updateBlock = useCanvasStore((s) => s.updateBlock)
-  const { titleBarMouseDown, handleResizeMouseDown, isMenuOpen, zIndex, cursor, closeMenu } =
+  const { titleBarMouseDown, handleResizeMouseDown, isMenuOpen, zIndex, cursor, userSelect, closeMenu } =
     useBlockInteractions(block, { minWidth: 300, minHeight: 200 })
 
   const [isEditingUrl, setIsEditingUrl] = useState(false)
@@ -60,6 +60,7 @@ const LinkBlock: React.FC<LinkBlockProps> = ({ block }) => {
         backgroundColor: '#ffffff',
         boxShadow: '0 8px 24px rgba(37, 99, 235, 0.1)',
         cursor,
+        userSelect,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',

@@ -30,7 +30,7 @@ function parseTableData(content: string): TableData {
 
 const TableBlock: React.FC<TableBlockProps> = ({ block }) => {
   const updateBlock = useCanvasStore((s) => s.updateBlock)
-  const { titleBarMouseDown, handleResizeMouseDown, isMenuOpen, zIndex, cursor, closeMenu } =
+  const { titleBarMouseDown, handleResizeMouseDown, isMenuOpen, zIndex, cursor, userSelect, closeMenu } =
     useBlockInteractions(block, { minWidth: 260, minHeight: 160 })
 
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null)
@@ -116,6 +116,7 @@ const TableBlock: React.FC<TableBlockProps> = ({ block }) => {
         backgroundColor: '#ffffff',
         boxShadow: '0 18px 36px rgba(15, 23, 42, 0.13)',
         cursor,
+        userSelect,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',

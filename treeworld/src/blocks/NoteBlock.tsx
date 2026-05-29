@@ -16,7 +16,7 @@ const CONTENT_VERTICAL_PADDING = 24
 
 const NoteBlock: React.FC<NoteBlockProps> = ({ block }) => {
   const updateBlock = useCanvasStore((s) => s.updateBlock)
-  const { titleBarMouseDown, handleResizeMouseDown, isResizing, isMenuOpen, zIndex, cursor, closeMenu } =
+  const { titleBarMouseDown, handleResizeMouseDown, isResizing, isMenuOpen, zIndex, cursor, userSelect, closeMenu } =
     useBlockInteractions(block, { minWidth: MIN_WIDTH, minHeight: MIN_HEIGHT })
 
   const [isEditing, setIsEditing] = useState(false)
@@ -71,6 +71,7 @@ const NoteBlock: React.FC<NoteBlockProps> = ({ block }) => {
         boxShadow: rotation >= 0 ? '4px 7px 14px rgba(74, 49, 12, 0.2)' : '-4px 7px 14px rgba(74, 49, 12, 0.2)',
         border: block.locked ? '2px solid #f97316' : '1px solid #ead56d',
         cursor,
+        userSelect,
         zIndex,
         display: 'flex',
         flexDirection: 'column',

@@ -15,7 +15,7 @@ const MAX_WIDTH = 320
 
 const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
   const updateBlock = useCanvasStore((s) => s.updateBlock)
-  const { titleBarMouseDown, handleResizeMouseDown, isResizing, isMenuOpen, zIndex, cursor, closeMenu } =
+  const { titleBarMouseDown, handleResizeMouseDown, isResizing, isMenuOpen, zIndex, cursor, userSelect, closeMenu } =
     useBlockInteractions(block, { minWidth: MIN_WIDTH, minHeight: MIN_HEIGHT })
 
   const [isEditing, setIsEditing] = useState(false)
@@ -51,7 +51,7 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
   return (
     <div
       className="physical-block bubble-block"
-      style={{ position: 'absolute', left: block.x, top: block.y, width: block.width, height: block.height, cursor, zIndex }}
+      style={{ position: 'absolute', left: block.x, top: block.y, width: block.width, height: block.height, cursor, userSelect, zIndex }}
       onMouseDown={titleBarMouseDown}
       onDoubleClick={handleDoubleClick}
     >

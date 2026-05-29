@@ -36,7 +36,7 @@ function buildSrcDoc(content: string): string {
 }
 
 const HtmlBlock: React.FC<HtmlBlockProps> = ({ block }) => {
-  const { titleBarMouseDown, handleResizeMouseDown, isMenuOpen, zIndex, cursor, closeMenu } =
+  const { titleBarMouseDown, handleResizeMouseDown, isMenuOpen, zIndex, cursor, userSelect, closeMenu } =
     useBlockInteractions(block, { minWidth: 280, minHeight: 220 })
 
   const [reloadToken, setReloadToken] = useState(0)
@@ -68,6 +68,7 @@ const HtmlBlock: React.FC<HtmlBlockProps> = ({ block }) => {
         backgroundColor: '#F0EBE0',
         boxShadow: '0 26px 48px rgba(43, 35, 24, 0.34)',
         cursor,
+        userSelect,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
