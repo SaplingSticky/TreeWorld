@@ -11,6 +11,7 @@ import SvgBlock from '../blocks/SvgBlock'
 import CodeBlock from '../blocks/CodeBlock'
 import TableBlock from '../blocks/TableBlock'
 import LinkBlock from '../blocks/LinkBlock'
+import BubbleBlock from '../blocks/BubbleBlock'
 
 const SCREEN_GRID_SIZE = 32
 const NAV_PADDING = 120
@@ -272,6 +273,8 @@ const Canvas: React.FC = () => {
         return <MarkdownBlock key={block.id} block={block} />
       case 'note':
         return <NoteBlock key={block.id} block={block} />
+      case 'bubble':
+        return <BubbleBlock key={block.id} block={block} />
       default:
         return null
     }

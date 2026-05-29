@@ -1,7 +1,8 @@
 const SHARED_CANVAS_RULES = `
-Supported block types: markdown, note, image, collection, html, svg, code.
+Supported block types: markdown, note, bubble, image, collection, html, svg, code, table, link.
 - Use markdown blocks for documents, explanations, outlines, plans, summaries, and structured content.
 - Use note blocks for reminders, quick tips, warnings, and short memos.
+- Use bubble blocks for brief messages, memos, reminders, and conversational notes that stand out visually.
 - Use image blocks for image URLs. If you do not have a real image URL, use https://placehold.co/600x400?text=Image.
 - Use collection blocks to organize multi-part outputs.
 - Use html blocks for small interactive demos, calculators, widgets, visual prototypes, and self-contained UI examples.
@@ -30,7 +31,7 @@ Plan schema:
       "title": "Collection title",
       "blocks": [
         {
-          "type": "markdown" | "note" | "image" | "collection" | "html" | "svg" | "code",
+          "type": "markdown" | "note" | "bubble" | "image" | "collection" | "html" | "svg" | "code" | "table" | "link",
           "title": "Block title",
           "reason": "Why this block type fits this content."
         }
@@ -62,7 +63,7 @@ Response schema:
       "type": "canvas.create",
       "block": {
         "id": "optional-stable-id-for-this-response",
-        "type": "markdown" | "note" | "image" | "collection" | "html" | "svg" | "code",
+        "type": "markdown" | "note" | "bubble" | "image" | "collection" | "html" | "svg" | "code" | "table" | "link",
         "title": "Short block title",
         "content": "Block content. Markdown is allowed for markdown blocks. Image blocks store an image URL in content. Collection blocks can use empty content. HTML blocks store a complete HTML document string. SVG blocks store a complete inline SVG string.",
         "x": number,
@@ -83,6 +84,7 @@ Rules:
 ${SHARED_CANVAS_RULES}
 - Default markdown size: width 320, height 240.
 - Default note size: width 200, height 200.
+- Default bubble size: width 200, height 160.
 - Default image size: width 240, height 180.
 - Default collection size: width 600, height 400.
 - Default html size: width 400, height 300.

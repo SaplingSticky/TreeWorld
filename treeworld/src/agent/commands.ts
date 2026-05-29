@@ -56,18 +56,18 @@ function fallbackBlockSize(type: Block['type']): { width: number; height: number
     return { width: 340, height: 200 }
   }
 
-  return type === 'markdown' ? { width: 320, height: 240 } : { width: 200, height: 200 }
+  return type === 'markdown' ? { width: 320, height: 240 } : type === 'bubble' ? { width: 200, height: 160 } : { width: 200, height: 200 }
 }
 
 function estimateTextHeight(type: Block['type'], content: string, width: number, fallbackHeight: number): number {
-  if (type !== 'markdown' && type !== 'note') {
+  if (type !== 'markdown' && type !== 'note' && type !== 'bubble') {
     return fallbackHeight
   }
 
   const usableWidth = Math.max(140, width - 48)
-  const averageCharWidth = type === 'markdown' ? 7.4 : 7.8
-  const lineHeight = type === 'markdown' ? 23 : 21
-  const headerHeight = type === 'markdown' ? 36 : 34
+  const averageCharWidth = type === 'markdown' ? 7.4 : type === 'bubble' ? 7.8 : 7.8
+  const lineHeight = type === 'markdown' ? 23 : type === 'bubble' ? 20 : 21
+  const headerHeight = type === 'markdown' ? 36 : type === 'bubble' ? 32 : 34
   const explicitLines = (content || 'Double click to edit').split(/\r?\n/)
   const visualLines = explicitLines.reduce((total, line) => {
     const lineLength = Math.max(1, line.length)
@@ -104,7 +104,7 @@ function normalizeCreateCommand(
     y: Number.isFinite(command.block.y) ? command.block.y as number : center.y + index * 44,
     width,
     height,
-    heightMode: type === 'markdown' || type === 'note' ? 'auto' : undefined,
+    heightMode: type === 'markdown' || type === 'note' || type === 'bubble' ? 'auto' : undefined,
     layoutGroupId,
     locked: false,
     parentCollectionId: null,

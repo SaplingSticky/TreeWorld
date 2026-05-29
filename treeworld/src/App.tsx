@@ -25,7 +25,7 @@ const BLOCK_VISUAL_PADDING: Record<Block['type'], number> = {
 interface ToolButtonProps {
   icon: ReactNode
   title: string
-  variant: 'settings' | 'markdown' | 'note' | 'html' | 'svg' | 'code' | 'table' | 'link'
+  variant: 'settings' | 'markdown' | 'note' | 'bubble' | 'html' | 'svg' | 'code' | 'table' | 'link'
   onClick: () => void
 }
 
@@ -194,6 +194,14 @@ function ToolIcon({ variant }: Pick<ToolButtonProps, 'variant'>) {
     )
   }
 
+  if (variant === 'bubble') {
+    return (
+      <svg {...commonProps}>
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+      </svg>
+    )
+  }
+
   if (variant === 'html') {
     return (
       <svg {...commonProps}>
@@ -220,6 +228,7 @@ function ToolButton({ icon, title, variant, onClick }: ToolButtonProps) {
     settings: { background: '#3e2600', border: '#f0ddb0', color: '#f0ddb0' },
     markdown: { background: '#f8f3e6', border: '#c8b088', color: '#6a4a1d' },
     note: { background: '#fff176', border: '#d6b900', color: '#5c4a00' },
+    bubble: { background: '#e8f5e9', border: '#a5d6a7', color: '#2e7d32' },
     html: { background: '#ece7de', border: '#bdb5a5', color: '#3a3530' },
     svg: { background: '#eef2f8', border: '#b8cce0', color: '#3a62a0' },
     code: { background: '#1e1e2e', border: '#45475a', color: '#cdd6f4' },
@@ -258,14 +267,14 @@ function App() {
   const { activeCanvasId, activeCanvasName, addBlock, camera, closeCanvas, exportCanvas } = useCanvasStore()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
-  const createBlock = (type: 'markdown' | 'note' | 'html' | 'svg' | 'code' | 'table' | 'link' | 'link') => {
+  const createBlock = (type: 'markdown' | 'note' | 'bubble' | 'html' | 'svg' | 'code' | 'table' | 'link') => {
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
 
     const worldX = (viewportWidth / 2 - camera.x) / camera.zoom
     const worldY = (viewportHeight / 2 - camera.y) / camera.zoom
-    const width = type === 'html' || type === 'svg' ? 400 : type === 'markdown' ? 320 : 200
-    const height = type === 'html' || type === 'svg' ? 300 : type === 'markdown' ? 240 : 200
+    const width = type === 'html' || type === 'svg' ? 400 : type === 'markdown' ? 320 : type === 'code' ? 420 : type === 'table' ? 440 : type === 'link' ? 340 : 200
+    const height = type === 'html' || type === 'svg' ? 300 : type === 'markdown' ? 240 : type === 'code' || type === 'table' ? 300 : type === 'link' ? 200 : 200
     const visualPadding = BLOCK_VISUAL_PADDING[type]
     const visibleBounds = {
       left: (86 - camera.x) / camera.zoom,
@@ -290,7 +299,7 @@ function App() {
       y: position.y,
       width,
       height,
-      heightMode: type === 'markdown' || type === 'note' ? 'auto' : undefined,
+      heightMode: type === 'markdown' || type === 'note' || type === 'bubble' ? 'auto' : undefined,
       content:
         type === 'html'
           ? '<!doctype html><html><body><main><p>HTML</p><button id="count">记录 0 次灵感</button></main><script>let n=0;document.getElementById("count").onclick=()=>{n+=1;document.getElementById("count").textContent=`记录 ${n} 次灵感`;};</script><style>body{font-family:Georgia,serif;display:grid;place-items:center;height:100vh;margin:0;background:#0c180c;color:#72d272}main{border:1px solid rgba(114,210,114,.45);padding:22px;text-align:center;box-shadow:0 0 22px rgba(114,210,114,.18)}p{font-family:"Courier New",monospace;font-size:12px;letter-spacing:.16em;margin:0 0 16px;text-transform:uppercase}button{border:1px solid #72d272;border-radius:2px;background:#102410;color:#72d272;font-size:16px;padding:12px 16px;cursor:pointer}</style></body></html>'
@@ -305,7 +314,7 @@ function App() {
           : '',
       locked: false,
       parentCollectionId: null,
-      title: type === 'html' ? 'HTML 原型' : type === 'svg' ? '白板 SVG' : type === 'code' ? '代码片段' : type === 'link' ? '链接预览' : type === 'table' ? '数据表格' : type === 'markdown' ? '纸页文档' : '灵感便签',
+      title: type === 'html' ? 'HTML 原型' : type === 'svg' ? '白板 SVG' : type === 'code' ? '代码片段' : type === 'link' ? '链接预览' : type === 'table' ? '数据表格' : type === 'markdown' ? '纸页文档' : type === 'bubble' ? '💬 备忘' : '灵感便签',
       createdBy: 'user',
       createdAt: Date.now(),
     }
@@ -390,6 +399,12 @@ function App() {
           title="添加灵感便签"
           variant="note"
           onClick={() => createBlock('note')}
+        />
+        <ToolButton
+          icon={<ToolIcon variant="bubble" />}
+          title="添加气泡备忘"
+          variant="bubble"
+          onClick={() => createBlock('bubble')}
         />
         <ToolButton
           icon={<ToolIcon variant="html" />}
