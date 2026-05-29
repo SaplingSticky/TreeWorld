@@ -14,7 +14,7 @@ const CollectionBlock: React.FC<CollectionBlockProps> = ({ block }) => {
     useBlockInteractions(block, { moveFn: moveCollection })
 
   const frontBlockId = useCanvasStore((s) => s.frontBlockId)
-  const zIndex = isMenuOpen || frontBlockId === block.id ? 999 : isDragging ? 900 : 0
+  const zIndex = isMenuOpen || frontBlockId === block.id ? 999 : 0
   const cursor = block.locked ? 'default' : isDragging ? 'grabbing' : 'grab'
   const userSelect = isDragging ? ('none' as const) : undefined
 

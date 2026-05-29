@@ -299,13 +299,17 @@ const Canvas: React.FC = () => {
   useEffect(() => {
     resolveLayoutOverlaps()
 
-    const collectionIds = new Set(
-      Object.values(useCanvasStore.getState().blocks)
-        .filter((block) => block.parentCollectionId)
-        .map((block) => block.parentCollectionId as string)
-    )
+    const timer = window.setTimeout(() => {
+      const collectionIds = new Set(
+        Object.values(useCanvasStore.getState().blocks)
+          .filter((block) => block.parentCollectionId)
+          .map((block) => block.parentCollectionId as string)
+      )
 
-    collectionIds.forEach((collectionId) => fitCollectionToChildren(collectionId))
+      collectionIds.forEach((collectionId) => fitCollectionToChildren(collectionId))
+    }, 150)
+
+    return () => window.clearTimeout(timer)
   }, [layoutFitSignature, fitCollectionToChildren, resolveLayoutOverlaps])
 
   return (
