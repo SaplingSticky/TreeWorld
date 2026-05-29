@@ -18,9 +18,14 @@ function parseTableData(content: string): TableData {
   try {
     const parsed = JSON.parse(content) as Partial<TableData>
     if (Array.isArray(parsed.headers) && Array.isArray(parsed.rows)) {
+      const headers = parsed.headers.map(String)
       return {
-        headers: parsed.headers.map(String),
-        rows: parsed.rows.map((row) => (Array.isArray(row) ? row.map(String) : [])),
+        headers,
+        rows: parsed.rows.map((row) => {
+          const cells = Array.isArray(row) ? row.map(String) : []
+          while (cells.length < headers.length) cells.push('')
+          return cells
+        }),
       }
     }
   } catch { /* fall through */ }
