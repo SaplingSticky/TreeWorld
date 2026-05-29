@@ -3,7 +3,7 @@ import { buildCanvasContext, executeCommands } from '../agent/commands'
 import { recordAgentIoLog } from '../agent/ioLog'
 import { askAgentPlan, executeAgentPlan } from '../agent/provider'
 import { formatSearchContext, searchWeb } from '../agent/search'
-import { useCanvasStore } from '../store'
+import { markNeedsLayoutResolve, useCanvasStore } from '../store'
 import type { AgentPlan, AgentSettings } from '../agent/types'
 
 type ChatRole = 'user' | 'ai'
@@ -210,6 +210,7 @@ const FloatingInput: React.FC = () => {
       useCanvasStore.getState().setAgentStatusText('Agent 正在生成画布...')
       const response = await executeAgentPlan(pendingPlan.userInput, canvasContext, settings, pendingPlan.plan)
 
+      markNeedsLayoutResolve()
       executeCommands(response, useCanvasStore.getState())
       setPendingPlan(null)
       appendMessage(createTextMessage('ai', response.message))

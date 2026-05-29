@@ -104,6 +104,11 @@ const LAYOUT_GAP_Y = 34
 const LAYOUT_COLUMNS = 2
 
 let saveTimer: number | undefined
+let needsLayoutResolve = false
+
+export function markNeedsLayoutResolve() {
+  needsLayoutResolve = true
+}
 
 function canvasKey(id: string): string {
   return `treeworld:canvas:${id}`
@@ -496,6 +501,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     scheduleActiveCanvasSave(get)
   },
   resolveLayoutOverlaps: () => {
+    if (!needsLayoutResolve) return
+    needsLayoutResolve = false
     set((state) => {
       const groupedBlocks = Object.values(state.blocks).reduce<Record<string, Block[]>>((groups, block) => {
         if (block.type === 'collection' || block.locked || block.createdBy !== 'agent') {
