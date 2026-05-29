@@ -228,7 +228,7 @@ function ToolButton({ icon, title, variant, onClick }: ToolButtonProps) {
     settings: { background: '#3e2600', border: '#f0ddb0', color: '#f0ddb0' },
     markdown: { background: '#f8f3e6', border: '#c8b088', color: '#6a4a1d' },
     note: { background: '#fff176', border: '#d6b900', color: '#5c4a00' },
-    bubble: { background: '#e8f5e9', border: '#a5d6a7', color: '#2e7d32' },
+    bubble: { background: '#f0f4ff', border: '#c7d2fe', color: '#4338ca' },
     html: { background: '#ece7de', border: '#bdb5a5', color: '#3a3530' },
     svg: { background: '#eef2f8', border: '#b8cce0', color: '#3a62a0' },
     code: { background: '#1e1e2e', border: '#45475a', color: '#cdd6f4' },
@@ -273,8 +273,8 @@ function App() {
 
     const worldX = (viewportWidth / 2 - camera.x) / camera.zoom
     const worldY = (viewportHeight / 2 - camera.y) / camera.zoom
-    const width = type === 'html' || type === 'svg' ? 400 : type === 'markdown' ? 320 : type === 'code' ? 420 : type === 'table' ? 440 : type === 'link' ? 340 : 200
-    const height = type === 'html' || type === 'svg' ? 300 : type === 'markdown' ? 240 : type === 'code' || type === 'table' ? 300 : type === 'link' ? 200 : 200
+    const width = type === 'html' || type === 'svg' ? 400 : type === 'markdown' ? 320 : type === 'code' ? 420 : type === 'table' ? 440 : type === 'link' ? 340 : type === 'bubble' ? 180 : 200
+    const height = type === 'html' || type === 'svg' ? 300 : type === 'markdown' ? 240 : type === 'code' || type === 'table' ? 300 : type === 'link' ? 200 : type === 'bubble' ? 52 : 200
     const visualPadding = BLOCK_VISUAL_PADDING[type]
     const visibleBounds = {
       left: (86 - camera.x) / camera.zoom,
@@ -314,7 +314,7 @@ function App() {
           : '',
       locked: false,
       parentCollectionId: null,
-      title: type === 'html' ? 'HTML 原型' : type === 'svg' ? '白板 SVG' : type === 'code' ? '代码片段' : type === 'link' ? '链接预览' : type === 'table' ? '数据表格' : type === 'markdown' ? '纸页文档' : type === 'bubble' ? '💬 备忘' : '灵感便签',
+      title: type === 'html' ? 'HTML 原型' : type === 'svg' ? '白板 SVG' : type === 'code' ? '代码片段' : type === 'link' ? '链接预览' : type === 'table' ? '数据表格' : type === 'markdown' ? '纸页文档' : type === 'bubble' ? 'PS' : '灵感便签',
       createdBy: 'user',
       createdAt: Date.now(),
     }
@@ -402,7 +402,7 @@ function App() {
         />
         <ToolButton
           icon={<ToolIcon variant="bubble" />}
-          title="添加气泡备忘"
+          title="添加气泡 PS"
           variant="bubble"
           onClick={() => createBlock('bubble')}
         />

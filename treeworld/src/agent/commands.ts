@@ -56,7 +56,7 @@ function fallbackBlockSize(type: Block['type']): { width: number; height: number
     return { width: 340, height: 200 }
   }
 
-  return type === 'markdown' ? { width: 320, height: 240 } : type === 'bubble' ? { width: 200, height: 160 } : { width: 200, height: 200 }
+  return type === 'markdown' ? { width: 320, height: 240 } : type === 'bubble' ? { width: 180, height: 52 } : { width: 200, height: 200 }
 }
 
 function estimateTextHeight(type: Block['type'], content: string, width: number, fallbackHeight: number): number {

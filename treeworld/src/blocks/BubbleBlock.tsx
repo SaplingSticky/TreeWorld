@@ -7,9 +7,9 @@ interface BubbleBlockProps {
   block: Block
 }
 
-const MIN_HEIGHT = 120
-const MIN_WIDTH = 160
-const CONTENT_VERTICAL_PADDING = 28
+const MIN_HEIGHT = 48
+const MIN_WIDTH = 120
+const MAX_WIDTH = 320
 
 const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
   const { camera, updateBlock } = useCanvasStore()
@@ -20,45 +20,27 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
   const [editContent, setEditContent] = useState(block.content)
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
-  const headerRef = useRef<HTMLDivElement>(null)
-  const contentMeasureRef = useRef<HTMLDivElement>(null)
+  const measureRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const dragStart = useRef({ x: 0, y: 0 })
   const blockStart = useRef({ x: 0, y: 0 })
   const resizeStart = useRef({ x: 0, y: 0 })
   const sizeStart = useRef({ width: 0, height: 0 })
-  const isAutoHeight = block.heightMode !== 'manual'
 
   useLayoutEffect(() => {
-    if (!isAutoHeight || isResizing || block.locked) {
+    if (isResizing || block.locked) {
       return
     }
 
-    const headerHeight = headerRef.current?.offsetHeight ?? 28
-    const measuredContentHeight = isEditing
-      ? textareaRef.current?.scrollHeight ?? 0
-      : contentMeasureRef.current?.scrollHeight ?? 0
-    const nextHeight = Math.max(
-      MIN_HEIGHT,
-      Math.ceil(headerHeight + measuredContentHeight + CONTENT_VERTICAL_PADDING)
-    )
+    const measuredWidth = measureRef.current?.scrollWidth ?? 0
+    const measuredHeight = measureRef.current?.scrollHeight ?? 0
+    const nextWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, measuredWidth + 28))
+    const nextHeight = Math.max(MIN_HEIGHT, measuredHeight + 20)
 
-    if (Math.abs(block.height - nextHeight) > 2) {
-      updateBlock(block.id, { height: nextHeight, heightMode: 'auto' })
+    if (Math.abs(block.width - nextWidth) > 4 || Math.abs(block.height - nextHeight) > 4) {
+      updateBlock(block.id, { width: nextWidth, height: nextHeight })
     }
-  }, [
-    block.content,
-    block.height,
-    block.heightMode,
-    block.id,
-    block.locked,
-    block.width,
-    editContent,
-    isAutoHeight,
-    isEditing,
-    isResizing,
-    updateBlock,
-  ])
+  }, [block.content, block.height, block.id, block.locked, block.width, isResizing, updateBlock])
 
   useEffect(() => {
     if (!isResizing) {
@@ -72,7 +54,6 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
       updateBlock(block.id, {
         width: Math.max(MIN_WIDTH, sizeStart.current.width + dx),
         height: Math.max(MIN_HEIGHT, sizeStart.current.height + dy),
-        heightMode: 'manual',
       })
     }
 
@@ -130,33 +111,23 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
     window.addEventListener('mouseup', onUp)
   }
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+
     if (block.locked) {
-      e.stopPropagation()
       return
     }
 
-    if (e.button === 0 && !isEditing && !isResizing) {
-      setIsDragging(true)
-      dragStart.current = { x: e.clientX, y: e.clientY }
-      blockStart.current = { x: block.x, y: block.y }
-      e.stopPropagation()
-    }
+    setEditContent(block.content)
+    setIsEditing(true)
   }
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      const dx = (e.clientX - dragStart.current.x) / camera.zoom
-      const dy = (e.clientY - dragStart.current.y) / camera.zoom
-      updateBlock(block.id, {
-        x: blockStart.current.x + dx,
-        y: blockStart.current.y + dy,
-      })
-    }
-  }
+  const handleBlur = () => {
+    setIsEditing(false)
 
-  const handleMouseUp = () => {
-    setIsDragging(false)
+    if (!block.locked) {
+      updateBlock(block.id, { content: editContent })
+    }
   }
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
@@ -172,36 +143,7 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
     sizeStart.current = { width: block.width, height: block.height }
   }
 
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-
-    if (block.locked) {
-      return
-    }
-
-    setEditContent(block.content)
-    setIsEditing(true)
-  }
-
-  const handleTitleDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-
-    if (block.locked || isEditing) {
-      return
-    }
-
-    setIsDragging(false)
-    setIsResizing(false)
-    updateBlock(block.id, { heightMode: 'auto' })
-  }
-
-  const handleBlur = () => {
-    setIsEditing(false)
-
-    if (!block.locked) {
-      updateBlock(block.id, { content: editContent })
-    }
-  }
+  const displayText = block.content || 'PS...'
 
   return (
     <div
@@ -212,57 +154,56 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
         top: block.y,
         width: block.width,
         height: block.height,
-        backgroundColor: '#E8F5E9',
-        borderRadius: '18px 18px 18px 4px',
-        boxShadow: '2px 4px 12px rgba(46, 125, 50, 0.15)',
-        border: block.locked ? '2px solid #f97316' : '1px solid #a5d6a7',
         cursor: block.locked ? 'default' : isResizing ? 'nwse-resize' : isDragging ? 'grabbing' : 'grab',
         zIndex: isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
       }}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onMouseDown={titleBarMouseDown}
+      onDoubleClick={handleDoubleClick}
     >
+      {/* Speech bubble */}
       <div
-        className="bubble-title"
-        ref={headerRef}
-        onDoubleClick={handleTitleDoubleClick}
-        onMouseDown={titleBarMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
         style={{
-          padding: '8px 36px 4px 14px',
-          fontSize: '11px',
-          fontWeight: 700,
-          fontFamily: '"Inter Tight", "Inter", sans-serif',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: '#2e7d32',
-          borderBottom: '1px solid rgba(46, 125, 50, 0.12)',
-          userSelect: 'none',
-          whiteSpace: 'nowrap',
+          position: 'relative',
+          background: block.locked ? '#fff3e0' : '#f0f4ff',
+          border: block.locked ? '2px solid #f97316' : '1px solid #c7d2fe',
+          borderRadius: '16px',
+          padding: '10px 16px',
+          boxShadow: '0 2px 8px rgba(99, 102, 241, 0.1)',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
           overflow: 'hidden',
-          textOverflow: 'ellipsis',
         }}
       >
-        {block.title || '💬 Memo'}
-      </div>
-      <div
-        style={{
-          flex: isAutoHeight ? '0 0 auto' : 1,
-          padding: '10px 14px 14px',
-          overflow: isAutoHeight ? 'visible' : 'auto',
-          color: '#1b5e20',
-          fontFamily: '"Caveat", "Segoe Print", "Comic Sans MS", cursive',
-          fontSize: '17px',
-          lineHeight: 1.45,
-        }}
-        onDoubleClick={handleDoubleClick}
-      >
+        {/* Triangle pointer */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '-7px',
+            left: '20px',
+            width: 0,
+            height: 0,
+            borderLeft: '7px solid transparent',
+            borderRight: '7px solid transparent',
+            borderTop: block.locked
+              ? '7px solid #f97316'
+              : '7px solid #c7d2fe',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '-5px',
+            left: '21px',
+            width: 0,
+            height: 0,
+            borderLeft: '6px solid transparent',
+            borderRight: '6px solid transparent',
+            borderTop: block.locked ? '6px solid #fff3e0' : '6px solid #f0f4ff',
+          }}
+        />
+
         {isEditing ? (
           <textarea
             ref={textareaRef}
@@ -270,26 +211,56 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
             onChange={(e) => setEditContent(e.target.value)}
             onBlur={handleBlur}
             autoFocus
+            onMouseDown={(e) => e.stopPropagation()}
             style={{
               width: '100%',
-              height: isAutoHeight ? 'auto' : '100%',
-              minHeight: isAutoHeight ? '72px' : undefined,
+              height: '100%',
               border: 'none',
               outline: 'none',
               resize: 'none',
-              fontFamily: 'inherit',
-              fontSize: '17px',
-              lineHeight: '1.45',
-              backgroundColor: 'transparent',
-              color: 'inherit',
+              background: 'transparent',
+              fontFamily: '"Inter", system-ui, sans-serif',
+              fontSize: '14px',
+              lineHeight: '1.5',
+              color: '#312e81',
             }}
           />
         ) : (
-          <div ref={contentMeasureRef} style={{ whiteSpace: 'pre-wrap' }}>
-            {block.content || 'Double click to edit'}
-          </div>
+          <span
+            style={{
+              fontFamily: '"Inter", system-ui, sans-serif',
+              fontSize: '14px',
+              lineHeight: '1.5',
+              color: '#312e81',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            {displayText}
+          </span>
         )}
       </div>
+
+      {/* Hidden measure element for auto-sizing */}
+      <div
+        ref={measureRef}
+        aria-hidden
+        style={{
+          position: 'absolute',
+          visibility: 'hidden',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+          fontFamily: '"Inter", system-ui, sans-serif',
+          fontSize: '14px',
+          lineHeight: '1.5',
+          padding: '10px 16px',
+          maxWidth: `${MAX_WIDTH}px`,
+          minWidth: `${MIN_WIDTH - 28}px`,
+        }}
+      >
+        {displayText}
+      </div>
+
       {isMenuOpen && <BlockMenu block={block} onClose={() => { setIsMenuOpen(false); clearFrontBlock() }} />}
 
       <div
@@ -301,12 +272,11 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
           position: 'absolute',
           right: 0,
           bottom: 0,
-          width: '18px',
-          height: '18px',
+          width: '14px',
+          height: '14px',
           cursor: block.locked ? 'default' : 'nwse-resize',
-          opacity: block.locked ? 0.35 : 1,
-          background:
-            'linear-gradient(135deg, transparent 0 45%, #43a047 45% 55%, transparent 55% 100%)',
+          opacity: block.locked ? 0.3 : 0.6,
+          background: 'linear-gradient(135deg, transparent 0 45%, #818cf8 45% 55%, transparent 55% 100%)',
         }}
       />
     </div>

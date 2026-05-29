@@ -88,7 +88,7 @@ Rules:
 ${SHARED_CANVAS_RULES}
 - Default markdown size: width 320, height 240.
 - Default note size: width 200, height 200.
-- Default bubble size: width 200, height 160.
+- Default bubble size: width 180, height 52.
 - Default image size: width 240, height 180.
 - Default collection size: width 600, height 400.
 - Default html size: width 400, height 300.
