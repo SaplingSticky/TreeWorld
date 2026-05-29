@@ -62,9 +62,14 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
       }
     }
 
-    const onUp = () => {
+    const cleanup = () => {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
+      window.removeEventListener('mouseleave', onLeave)
+    }
+
+    const onUp = () => {
+      cleanup()
       if (!didDrag) {
         setIsMenuOpen(true)
         bringToFront(blockId)
@@ -72,8 +77,16 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
       setIsDragging(false)
     }
 
+    const onLeave = (le: MouseEvent) => {
+      if (le.relatedTarget === null) {
+        cleanup()
+        setIsDragging(false)
+      }
+    }
+
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
+    window.addEventListener('mouseleave', onLeave)
   }
 
   // ── Resize via window listeners ──

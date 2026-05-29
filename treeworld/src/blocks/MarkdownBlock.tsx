@@ -75,7 +75,7 @@ function preserveSoftLineBreaks(content: string): string {
 }
 
 const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
-  const { camera, updateBlock } = useCanvasStore()
+  const updateBlock = useCanvasStore((s) => s.updateBlock)
   const frontBlockId = useCanvasStore((s) => s.frontBlockId)
   const clearFrontBlock = useCanvasStore((s) => s.clearFrontBlock)
   const bringToFront = useCanvasStore((s) => s.bringToFront)
@@ -91,11 +91,6 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const contentMeasureRef = useRef<HTMLDivElement>(null)
-  const titleBarDownRef = useRef<{ x: number; y: number } | null>(null)
-  const isMouseDown = useRef(false)
-  const hasMoved = useRef(false)
-  const dragStart = useRef({ x: 0, y: 0 })
-  const blockStart = useRef({ x: 0, y: 0 })
   const resizeStart = useRef({ x: 0, y: 0 })
   const sizeStart = useRef({ width: 0, height: 0 })
   const isAutoHeight = block.heightMode !== 'manual'
@@ -140,45 +135,65 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     if (block.locked) return
     e.stopPropagation(); e.preventDefault()
-    isMouseDown.current = false; hasMoved.current = false
     setIsDragging(false); setIsResizing(true)
     resizeStart.current = { x: e.clientX, y: e.clientY }
     sizeStart.current = { width: block.width, height: block.height }
   }
 
-  // ── Drag (ref-based, guards against editing) ──
-  const titleBarMouseDown = (e: React.MouseEvent) => {
+  // ── Drag via window listeners (survives fast mouse movement) ──
+  const startDrag = (e: React.MouseEvent, fromTitleBar: boolean) => {
     if (block.locked || isEditing || e.button !== 0) return
     e.preventDefault()
-    titleBarDownRef.current = { x: e.clientX, y: e.clientY }
-    isMouseDown.current = true; hasMoved.current = false
-    dragStart.current = { x: e.clientX, y: e.clientY }
-    blockStart.current = { x: block.x, y: block.y }
-  }
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (block.locked || isEditing) { e.preventDefault(); return }
-    if (e.button === 0) {
-      e.preventDefault()
-      isMouseDown.current = true; hasMoved.current = false
-      dragStart.current = { x: e.clientX, y: e.clientY }
-      blockStart.current = { x: block.x, y: block.y }
+    const startX = e.clientX
+    const startY = e.clientY
+    const blockId = block.id
+    let didDrag = false
+    let lastX = startX
+    let lastY = startY
+
+    const onMove = (me: MouseEvent) => {
+      if (!didDrag && (Math.abs(me.clientX - startX) > 5 || Math.abs(me.clientY - startY) > 5)) {
+        didDrag = true
+        setIsDragging(true)
+        lastX = startX
+        lastY = startY
+      }
+      if (didDrag) {
+        const state = useCanvasStore.getState()
+        const currentBlock = state.blocks[blockId]
+        if (!currentBlock) return
+        const dx = (me.clientX - lastX) / state.camera.zoom
+        const dy = (me.clientY - lastY) / state.camera.zoom
+        state.updateBlock(blockId, { x: currentBlock.x + dx, y: currentBlock.y + dy })
+        lastX = me.clientX
+        lastY = me.clientY
+      }
     }
-  }
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isMouseDown.current && !isEditing) {
-      const dx = e.clientX - dragStart.current.x
-      const dy = e.clientY - dragStart.current.y
-      if (!hasMoved.current && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) { hasMoved.current = true; setIsDragging(true) }
-      if (hasMoved.current) updateBlock(block.id, { x: blockStart.current.x + dx / camera.zoom, y: blockStart.current.y + dy / camera.zoom })
+    const cleanup = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      window.removeEventListener('mouseleave', onLeave)
     }
+
+    const onUp = () => {
+      cleanup()
+      if (fromTitleBar && !didDrag) { setIsMenuOpen(true); bringToFront(blockId) }
+      setIsDragging(false)
+    }
+
+    const onLeave = (le: MouseEvent) => {
+      if (le.relatedTarget === null) { cleanup(); setIsDragging(false) }
+    }
+
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    window.addEventListener('mouseleave', onLeave)
   }
 
-  const handleMouseUp = () => {
-    if (titleBarDownRef.current && !hasMoved.current) { titleBarDownRef.current = null; setIsMenuOpen(true); bringToFront(block.id) }
-    titleBarDownRef.current = null; isMouseDown.current = false; hasMoved.current = false; setIsDragging(false)
-  }
+  const titleBarMouseDown = (e: React.MouseEvent) => startDrag(e, true)
+  const handleMouseDown = (e: React.MouseEvent) => startDrag(e, false)
 
   const closeMenu = () => { setIsMenuOpen(false); clearFrontBlock() }
 
@@ -260,9 +275,6 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
         cursor, userSelect, zIndex, display: 'flex', flexDirection: 'column', overflow: 'visible',
       }}
       onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
     >
       {isMenuOpen && <BlockMenu block={block} onClose={closeMenu} />}
       <div
