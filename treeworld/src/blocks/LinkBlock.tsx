@@ -191,6 +191,7 @@ const LinkBlock: React.FC<LinkBlockProps> = ({ block }) => {
         overflow: 'hidden',
         zIndex: isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1,
       }}
+      onMouseDown={titleBarMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -198,7 +199,6 @@ const LinkBlock: React.FC<LinkBlockProps> = ({ block }) => {
       {isMenuOpen && <BlockMenu block={block} onClose={() => { setIsMenuOpen(false); clearFrontBlock() }} />}
       <div
         className="link-block-header"
-        onMouseDown={titleBarMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         style={{

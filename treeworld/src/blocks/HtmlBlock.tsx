@@ -183,13 +183,13 @@ const HtmlBlock: React.FC<HtmlBlockProps> = ({ block }) => {
         overflow: 'hidden',
         zIndex: isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1,
       }}
+      onMouseDown={titleBarMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
       <div
         className="html-device-title"
-        onMouseDown={titleBarMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
         style={{

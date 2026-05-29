@@ -185,13 +185,13 @@ const SvgBlock: React.FC<SvgBlockProps> = ({ block }) => {
         overflow: 'hidden',
         zIndex: isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1,
       }}
+      onMouseDown={titleBarMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
       <div
         className="svg-whiteboard-title"
-        onMouseDown={titleBarMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
         style={{
