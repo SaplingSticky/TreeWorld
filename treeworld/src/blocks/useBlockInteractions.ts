@@ -79,6 +79,7 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
   // ── Resize via window listeners ──
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     if (block.locked) return
+    e.stopPropagation()
     e.preventDefault()
     setIsDragging(false)
     setIsResizing(true)
@@ -103,10 +104,10 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
       if (onResize) {
         const result = onResize(newWidth, newHeight)
         if (result !== false) {
-          state.updateBlock(blockId, { ...result, heightMode: 'manual' })
+          state.updateBlock(blockId, result)
         }
       } else {
-        state.updateBlock(blockId, { width: newWidth, height: newHeight, heightMode: 'manual' })
+        state.updateBlock(blockId, { width: newWidth, height: newHeight })
       }
     }
 
