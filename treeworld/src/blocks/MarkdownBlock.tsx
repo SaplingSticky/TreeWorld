@@ -120,20 +120,22 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
   // ── Resize (with editing-mode special case) ──
   useEffect(() => {
     if (!isResizing) return
+    const blockId = block.id
     const handleResizeMove = (e: MouseEvent) => {
-      const dx = (e.clientX - resizeStart.current.x) / camera.zoom
-      const dy = (e.clientY - resizeStart.current.y) / camera.zoom
+      const zoom = useCanvasStore.getState().camera.zoom
+      const dx = (e.clientX - resizeStart.current.x) / zoom
+      const dy = (e.clientY - resizeStart.current.y) / zoom
       if (isEditing) {
-        updateBlock(block.id, { width: Math.max(MIN_WIDTH, sizeStart.current.width + dx), heightMode: 'auto' })
+        updateBlock(blockId, { width: Math.max(MIN_WIDTH, sizeStart.current.width + dx), heightMode: 'auto' })
       } else {
-        updateBlock(block.id, { width: Math.max(MIN_WIDTH, sizeStart.current.width + dx), height: Math.max(MIN_HEIGHT, sizeStart.current.height + dy), heightMode: 'manual' })
+        updateBlock(blockId, { width: Math.max(MIN_WIDTH, sizeStart.current.width + dx), height: Math.max(MIN_HEIGHT, sizeStart.current.height + dy), heightMode: 'manual' })
       }
     }
     const handleResizeEnd = () => setIsResizing(false)
     window.addEventListener('mousemove', handleResizeMove)
     window.addEventListener('mouseup', handleResizeEnd)
     return () => { window.removeEventListener('mousemove', handleResizeMove); window.removeEventListener('mouseup', handleResizeEnd) }
-  }, [block.id, camera.zoom, isEditing, isResizing, updateBlock])
+  }, [block.id, isEditing, isResizing, updateBlock])
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     if (block.locked) return

@@ -16,7 +16,6 @@ interface BlockInteractionOptions {
 export function useBlockInteractions(block: Block, options: BlockInteractionOptions = {}) {
   const { minWidth = 80, minHeight = 80, moveFn, onResize } = options
 
-  const updateBlock = useCanvasStore((s) => s.updateBlock)
   const frontBlockId = useCanvasStore((s) => s.frontBlockId)
   const clearFrontBlock = useCanvasStore((s) => s.clearFrontBlock)
   const bringToFront = useCanvasStore((s) => s.bringToFront)
@@ -90,20 +89,24 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
   useEffect(() => {
     if (!isResizing) return
 
+    const blockId = block.id
+
     const handleResizeMove = (e: MouseEvent) => {
-      const zoom = useCanvasStore.getState().camera.zoom
-      const dx = (e.clientX - resizeStart.current.x) / zoom
-      const dy = (e.clientY - resizeStart.current.y) / zoom
+      const state = useCanvasStore.getState()
+      const currentBlock = state.blocks[blockId]
+      if (!currentBlock) return
+      const dx = (e.clientX - resizeStart.current.x) / state.camera.zoom
+      const dy = (e.clientY - resizeStart.current.y) / state.camera.zoom
       const newWidth = Math.max(minWidth, sizeStart.current.width + dx)
       const newHeight = Math.max(minHeight, sizeStart.current.height + dy)
 
       if (onResize) {
         const result = onResize(newWidth, newHeight)
         if (result !== false) {
-          updateBlock(block.id, result)
+          state.updateBlock(blockId, { ...result, heightMode: 'manual' })
         }
       } else {
-        updateBlock(block.id, { width: newWidth, height: newHeight })
+        state.updateBlock(blockId, { width: newWidth, height: newHeight, heightMode: 'manual' })
       }
     }
 
@@ -115,7 +118,7 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
       window.removeEventListener('mousemove', handleResizeMove)
       window.removeEventListener('mouseup', handleResizeEnd)
     }
-  }, [block.id, isResizing, updateBlock, minWidth, minHeight, onResize])
+  }, [block.id, isResizing, minWidth, minHeight, onResize])
 
   // ── Derived values ──
   const zIndex = isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1
