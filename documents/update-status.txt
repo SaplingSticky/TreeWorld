@@ -80,3 +80,11 @@
 15:00 Settings Ollama 按钮不可见根因：按钮文本三元表达式只处理了 anthropic/openai，ollama 分支回退显示为 OpenAI。修复：添加 provider === 'ollama' ? 'Ollama' 分支
 15:00 增加 ErrorBoundary 组件防止白屏死机
 15:00 全部 6 项通过自动化测试：菜单可见、撤销生效、表格编辑、锁按钮已移除、链接 iframe、Ollama 按钮可见
+# 2026-5-29 (round 5 - project audit & improvements)
+16:00 初始化 Git 仓库，创建根级 .gitignore，清理 .npm-cache 和 .pw-browsers
+16:00 实现 bubble 块类型（气泡备忘）：BubbleBlock 组件、Canvas 渲染、Agent 类型/prompt/commands 全链路、工具栏按钮
+16:00 新增 canvas.query 指令和 queryBlock() 工具函数
+16:00 强化 Agent prompt，搜索后生成的 MD 块必须附 Sources 来源链接
+16:00 Home 页增加画布名称搜索功能，支持实时过滤和结果计数
+16:00 Settings 面板新增 Agent IO 日志查看器，可展开查看最近 100 条 API 调用记录
+16:00 全部变更通过 tsc + vite build + eslint 验证
