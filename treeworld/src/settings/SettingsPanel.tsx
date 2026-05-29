@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import type { AgentProvider } from '../agent/types'
+import { clearAgentIoLogs, getAgentIoLogs } from '../agent/ioLog'
+import type { AgentIoLogEntry } from '../agent/ioLog'
 import { useCanvasStore } from '../store'
 import type { CanvasTheme } from '../store'
 
@@ -37,7 +39,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   const [draftSearchApiKey, setDraftSearchApiKey] = useState(agentSearchApiKey)
   const [draftCanvasTheme, setDraftCanvasTheme] = useState<CanvasTheme>(canvasTheme)
   const [savedMessage, setSavedMessage] = useState('')
+  const [isLogOpen, setIsLogOpen] = useState(false)
+  const [logEntries, setLogEntries] = useState<AgentIoLogEntry[]>(() => getAgentIoLogs())
   const providerLabel = draftProvider === 'anthropic' ? 'Anthropic' : draftProvider === 'ollama' ? 'Ollama' : 'OpenAI'
+
+  const refreshLogs = () => setLogEntries(getAgentIoLogs())
+  const handleClearLogs = () => {
+    clearAgentIoLogs()
+    setLogEntries([])
+  }
 
   const save = () => {
     setAgentSettings({
@@ -473,6 +483,86 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
               <div>点击块标题栏 — 打开块操作菜单</div>
               <div>双击块内容 — 编辑块内容</div>
             </div>
+          </div>
+
+          <div style={{ marginTop: '16px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (!isLogOpen) {
+                  refreshLogs()
+                }
+                setIsLogOpen(!isLogOpen)
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#374151',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 700,
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              Agent IO 日志 {isLogOpen ? '▼' : '▶'} <span style={{ color: '#9ca3af', fontWeight: 400 }}>({logEntries.length})</span>
+            </button>
+            {isLogOpen && (
+              <div style={{ marginTop: '10px' }}>
+                {logEntries.length === 0 ? (
+                  <p style={{ color: '#9ca3af', fontSize: '12px', margin: 0 }}>暂无日志记录</p>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleClearLogs}
+                      style={{
+                        border: '1px solid #fecaca',
+                        borderRadius: '4px',
+                        backgroundColor: '#fff1f2',
+                        color: '#be123c',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        padding: '4px 8px',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      清空日志
+                    </button>
+                    <div style={{ maxHeight: '240px', overflow: 'auto', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
+                      {logEntries.map((entry) => (
+                        <div
+                          key={entry.id}
+                          style={{
+                            padding: '8px 10px',
+                            borderBottom: '1px solid #f3f4f6',
+                            fontSize: '11px',
+                            fontFamily: 'Monaco, Menlo, monospace',
+                            color: entry.status === 'error' ? '#be123c' : '#374151',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                            <span style={{ fontWeight: 700 }}>
+                              {entry.status === 'error' ? '❌' : '✅'} {entry.provider}/{entry.modelId}
+                            </span>
+                            <span style={{ color: '#9ca3af' }}>{entry.durationMs}ms</span>
+                          </div>
+                          <div style={{ color: '#6b7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {entry.userInput.slice(0, 80)}
+                          </div>
+                          {entry.errorMessage && (
+                            <div style={{ color: '#be123c', marginTop: '2px' }}>{entry.errorMessage.slice(0, 120)}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <footer
