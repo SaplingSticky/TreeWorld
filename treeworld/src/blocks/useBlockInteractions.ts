@@ -27,6 +27,8 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
   const lastMouse = useRef({ x: 0, y: 0 })
   const resizeStart = useRef({ x: 0, y: 0 })
   const sizeStart = useRef({ width: 0, height: 0 })
+  const rafId = useRef(0)
+  const pendingDelta = useRef({ dx: 0, dy: 0 })
 
   // ── Drag via window listeners ──
   // Attaches to onMouseDown of the draggable area (title bar or root div).
@@ -48,17 +50,25 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
         lastMouse.current = { x: startX, y: startY }
       }
       if (didDrag) {
-        const state = useCanvasStore.getState()
-        const currentBlock = state.blocks[blockId]
-        if (!currentBlock) return
-        const dx = (me.clientX - lastMouse.current.x) / state.camera.zoom
-        const dy = (me.clientY - lastMouse.current.y) / state.camera.zoom
-        if (moveFn) {
-          moveFn(blockId, dx, dy)
-        } else {
-          state.updateBlock(blockId, { x: currentBlock.x + dx, y: currentBlock.y + dy })
-        }
+        pendingDelta.current.dx += me.clientX - lastMouse.current.x
+        pendingDelta.current.dy += me.clientY - lastMouse.current.y
         lastMouse.current = { x: me.clientX, y: me.clientY }
+        if (!rafId.current) {
+          rafId.current = requestAnimationFrame(() => {
+            rafId.current = 0
+            const state = useCanvasStore.getState()
+            const currentBlock = state.blocks[blockId]
+            if (!currentBlock) return
+            const dx = pendingDelta.current.dx / state.camera.zoom
+            const dy = pendingDelta.current.dy / state.camera.zoom
+            pendingDelta.current = { dx: 0, dy: 0 }
+            if (moveFn) {
+              moveFn(blockId, dx, dy)
+            } else {
+              state.updateBlock(blockId, { x: currentBlock.x + dx, y: currentBlock.y + dy })
+            }
+          })
+        }
       }
     }
 
@@ -66,6 +76,7 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
       window.removeEventListener('mouseleave', onLeave)
+      cancelAnimationFrame(rafId.current)
     }
 
     const onUp = () => {

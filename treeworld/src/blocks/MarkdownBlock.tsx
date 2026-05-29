@@ -192,7 +192,7 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
     window.addEventListener('mouseleave', onLeave)
   }
 
-  const titleBarMouseDown = (e: React.MouseEvent) => startDrag(e, true)
+  const titleBarMouseDown = (e: React.MouseEvent) => { e.stopPropagation(); startDrag(e, true) }
   const handleMouseDown = (e: React.MouseEvent) => startDrag(e, false)
 
   const closeMenu = () => { setIsMenuOpen(false); clearFrontBlock() }
