@@ -16,7 +16,6 @@ interface BlockInteractionOptions {
 export function useBlockInteractions(block: Block, options: BlockInteractionOptions = {}) {
   const { minWidth = 80, minHeight = 80, moveFn, onResize } = options
 
-  const camera = useCanvasStore((s) => s.camera)
   const updateBlock = useCanvasStore((s) => s.updateBlock)
   const frontBlockId = useCanvasStore((s) => s.frontBlockId)
   const clearFrontBlock = useCanvasStore((s) => s.clearFrontBlock)
@@ -40,6 +39,7 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
 
     const startX = e.clientX
     const startY = e.clientY
+    const blockId = block.id
     let didDrag = false
 
     const onMove = (me: MouseEvent) => {
@@ -49,12 +49,15 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
         lastMouse.current = { x: startX, y: startY }
       }
       if (didDrag) {
-        const dx = (me.clientX - lastMouse.current.x) / camera.zoom
-        const dy = (me.clientY - lastMouse.current.y) / camera.zoom
+        const state = useCanvasStore.getState()
+        const currentBlock = state.blocks[blockId]
+        if (!currentBlock) return
+        const dx = (me.clientX - lastMouse.current.x) / state.camera.zoom
+        const dy = (me.clientY - lastMouse.current.y) / state.camera.zoom
         if (moveFn) {
-          moveFn(block.id, dx, dy)
+          moveFn(blockId, dx, dy)
         } else {
-          updateBlock(block.id, { x: block.x + dx, y: block.y + dy })
+          state.updateBlock(blockId, { x: currentBlock.x + dx, y: currentBlock.y + dy })
         }
         lastMouse.current = { x: me.clientX, y: me.clientY }
       }
@@ -65,7 +68,7 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
       window.removeEventListener('mouseup', onUp)
       if (!didDrag) {
         setIsMenuOpen(true)
-        bringToFront(block.id)
+        bringToFront(blockId)
       }
       setIsDragging(false)
     }
@@ -89,8 +92,9 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
     if (!isResizing) return
 
     const handleResizeMove = (e: MouseEvent) => {
-      const dx = (e.clientX - resizeStart.current.x) / camera.zoom
-      const dy = (e.clientY - resizeStart.current.y) / camera.zoom
+      const zoom = useCanvasStore.getState().camera.zoom
+      const dx = (e.clientX - resizeStart.current.x) / zoom
+      const dy = (e.clientY - resizeStart.current.y) / zoom
       const newWidth = Math.max(minWidth, sizeStart.current.width + dx)
       const newHeight = Math.max(minHeight, sizeStart.current.height + dy)
 
@@ -112,7 +116,7 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
       window.removeEventListener('mousemove', handleResizeMove)
       window.removeEventListener('mouseup', handleResizeEnd)
     }
-  }, [block.id, camera.zoom, isResizing, updateBlock, minWidth, minHeight, onResize])
+  }, [block.id, isResizing, updateBlock, minWidth, minHeight, onResize])
 
   // ── Derived values ──
   const zIndex = isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1
