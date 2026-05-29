@@ -47,7 +47,7 @@ ${SHARED_CANVAS_RULES}
 - For small requests, still return one collection with one to three blocks.
 - If the user asks to revise an existing plan, incorporate the revision and return the updated full plan.
 - Keep titles concise and readable on cards.
-- If Web search context is present, mention in reasons which blocks will include source-backed information.
+- If Web search context is present, mention in reasons which blocks will include source-backed information. Plan for a "Sources" section in markdown blocks that use search data.
 `.trim()
 
 export const EXECUTION_SYSTEM_PROMPT = `
@@ -106,7 +106,7 @@ ${SHARED_CANVAS_RULES}
 - Use ids such as "research-collection", "research-summary", and "research-actions" only within the current response.
 - If canvas context says a block is locked, do not update, move, resize, or group that locked block. Create a note explaining that it must be unlocked first.
 - Keep content useful and concise.
-- If Web search context is present, cite the provided URLs in markdown blocks instead of inventing sources.
+- If Web search context is present, ALWAYS append a "Sources" section at the end of each markdown block that uses search data. Format: "Sources: [Title](URL)". Never invent URLs — only use URLs from the search context.
 `.trim()
 
 export const SYSTEM_PROMPT = EXECUTION_SYSTEM_PROMPT
