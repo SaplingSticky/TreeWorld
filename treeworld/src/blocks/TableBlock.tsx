@@ -155,7 +155,7 @@ const TableBlock: React.FC<TableBlockProps> = ({ block }) => {
                   onClick={() => handleSort(colIndex)}
                   onMouseDown={(e) => e.stopPropagation()}
                   onDoubleClick={(e) => e.stopPropagation()}
-                  style={{ padding: '6px 10px', borderBottom: '2px solid #86efac', backgroundColor: '#f0fdf4', color: '#166534', fontWeight: 700, textAlign: 'left', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 1 }}
+                  style={{ padding: '6px 10px', paddingRight: colIndex === sortedData.headers.length - 1 ? '28px' : '10px', borderBottom: '2px solid #86efac', backgroundColor: '#f0fdf4', color: '#166534', fontWeight: 700, textAlign: 'left', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 1 }}
                 >
                   {header}
                   {sortColumn === colIndex && <span style={{ marginLeft: '4px', fontSize: '10px' }}>{sortAsc ? '▲' : '▼'}</span>}
@@ -167,7 +167,7 @@ const TableBlock: React.FC<TableBlockProps> = ({ block }) => {
             {sortedData.rows.map((row, rowIndex) => (
               <tr key={rowIndex}>
                 {row.map((cell, colIndex) => (
-                  <td key={colIndex} style={{ padding: '4px 10px', borderBottom: '1px solid #f3f4f6', color: '#1f2937', minWidth: '80px' }}>
+                  <td key={colIndex} style={{ padding: '4px 10px', paddingRight: colIndex === row.length - 1 ? '28px' : '10px', borderBottom: '1px solid #f3f4f6', color: '#1f2937', minWidth: '80px' }}>
                     {editingCell?.row === rowIndex && editingCell?.col === colIndex ? (
                       <input
                         autoFocus
