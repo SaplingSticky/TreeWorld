@@ -137,7 +137,11 @@ const HomePage: React.FC = () => {
   const importCanvas = useCanvasStore((state) => state.importCanvas)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const totalBlocks = canvasMetas.reduce((sum, meta) => sum + meta.blockCount, 0)
+  const filteredMetas = searchQuery.trim()
+    ? canvasMetas.filter((meta) => meta.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    : canvasMetas
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -207,6 +211,19 @@ const HomePage: React.FC = () => {
         </button>
       )}
 
+      {canvasMetas.length > 0 && (
+        <div className="home-search">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="搜索画布名称..."
+            aria-label="搜索画布"
+          />
+          {searchQuery.trim() && <span className="home-search-count">{filteredMetas.length} 个结果</span>}
+        </div>
+      )}
+
       {canvasMetas.length === 0 ? (
         <section className="home-empty">
           <h2>还没有画布</h2>
@@ -215,9 +232,14 @@ const HomePage: React.FC = () => {
             创建第一张画布
           </button>
         </section>
+      ) : filteredMetas.length === 0 ? (
+        <section className="home-empty">
+          <h2>没有匹配的画布</h2>
+          <p>尝试其他关键词，或清除搜索查看全部画布。</p>
+        </section>
       ) : (
         <section className="home-grid">
-          {canvasMetas.map((meta) => (
+          {filteredMetas.map((meta) => (
             <CanvasCard key={meta.id} meta={meta} />
           ))}
         </section>
