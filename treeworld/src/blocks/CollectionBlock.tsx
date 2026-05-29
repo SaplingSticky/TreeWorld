@@ -27,22 +27,17 @@ const CollectionBlock: React.FC<CollectionBlockProps> = ({ block }) => {
         top: block.y,
         width: block.width,
         height: block.height,
-        border: block.locked ? '2px solid #f97316' : '3px solid #8B6914',
-        borderRadius: '6px',
-        backgroundColor: 'rgba(200, 168, 122, 0.54)',
-        color: '#3f2a15',
         cursor,
         userSelect,
         zIndex,
         pointerEvents: 'auto',
-        boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.24), 0 18px 34px rgba(63, 42, 21, 0.12)',
+        padding: '14px 18px 20px',
       }}
       onMouseDown={titleBarMouseDown}
     >
       {isMenuOpen && <BlockMenu block={block} onClose={closeMenu} />}
       <div
         className="collection-cork-title"
-        style={{ borderBottom: '0', fontSize: '13px', fontWeight: 800, padding: '8px 40px 8px 14px' }}
       >
         {block.title || 'Collection'}
       </div>
