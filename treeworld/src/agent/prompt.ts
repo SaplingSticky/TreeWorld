@@ -76,6 +76,10 @@ Response schema:
       "type": "canvas.group",
       "collectionId": "collection block id",
       "blockIds": ["child block id"]
+    },
+    {
+      "type": "canvas.query",
+      "id": "block id to query"
     }
   ]
 }

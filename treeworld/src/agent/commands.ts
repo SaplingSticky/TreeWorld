@@ -292,6 +292,10 @@ function executeCommand(
   }
 }
 
+export function queryBlock(id: string, store: CanvasCommandStore): Block | null {
+  return store.blocks[id] ?? null
+}
+
 export function executeCommands(response: AgentResponse, store: CanvasCommandStore): void {
   const layoutGroupId = crypto.randomUUID()
   const createdBlockIds: string[] = []

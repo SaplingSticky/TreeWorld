@@ -62,6 +62,11 @@ export interface CanvasBatchCommand {
   commands: CanvasCommand[]
 }
 
+export interface CanvasQueryCommand {
+  type: 'canvas.query'
+  id: string
+}
+
 export type CanvasCommand =
   | CanvasCreateCommand
   | CanvasUpdateCommand
@@ -70,6 +75,7 @@ export type CanvasCommand =
   | CanvasLockCommand
   | CanvasGroupCommand
   | CanvasBatchCommand
+  | CanvasQueryCommand
 
 export interface AgentResponse {
   message: string
