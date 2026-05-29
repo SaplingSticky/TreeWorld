@@ -174,6 +174,26 @@ const HomePage: React.FC = () => {
           <span>TreeWorld</span>
         </div>
         <div className="home-nav-actions">
+          {canvasMetas.length > 0 && (
+            <div className="home-nav-search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, color: '#9ca3af' }}>
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索画布..."
+                aria-label="搜索画布"
+              />
+              {searchQuery.trim() && (
+                <button type="button" className="home-nav-search-clear" onClick={() => setSearchQuery('')}>
+                  ×
+                </button>
+              )}
+            </div>
+          )}
           <button type="button" onClick={() => fileInputRef.current?.click()}>
             导入 JSON
           </button>
@@ -209,19 +229,6 @@ const HomePage: React.FC = () => {
         <button type="button" className="home-message" onClick={() => setMessage('')}>
           {message}
         </button>
-      )}
-
-      {canvasMetas.length > 0 && (
-        <div className="home-search">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="搜索画布名称..."
-            aria-label="搜索画布"
-          />
-          {searchQuery.trim() && <span className="home-search-count">{filteredMetas.length} 个结果</span>}
-        </div>
       )}
 
       {canvasMetas.length === 0 ? (
