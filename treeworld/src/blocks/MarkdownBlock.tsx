@@ -147,7 +147,7 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
   // ── Drag (ref-based, guards against editing) ──
   const titleBarMouseDown = (e: React.MouseEvent) => {
     if (block.locked || isEditing || e.button !== 0) return
-    e.stopPropagation()
+    e.preventDefault()
     titleBarDownRef.current = { x: e.clientX, y: e.clientY }
     isMouseDown.current = true; hasMoved.current = false
     dragStart.current = { x: e.clientX, y: e.clientY }
@@ -155,9 +155,9 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
   }
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (block.locked || isEditing) { e.stopPropagation(); return }
+    if (block.locked || isEditing) { e.preventDefault(); return }
     if (e.button === 0) {
-      e.stopPropagation()
+      e.preventDefault()
       isMouseDown.current = true; hasMoved.current = false
       dragStart.current = { x: e.clientX, y: e.clientY }
       blockStart.current = { x: block.x, y: block.y }

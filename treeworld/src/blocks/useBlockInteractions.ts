@@ -35,7 +35,7 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
   // leaves the element.
   const titleBarMouseDown = (e: React.MouseEvent) => {
     if (block.locked || e.button !== 0) return
-    e.stopPropagation()
+    e.preventDefault()
 
     const startX = e.clientX
     const startY = e.clientY
@@ -80,7 +80,6 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
   // ── Resize via window listeners ──
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     if (block.locked) return
-    e.stopPropagation()
     e.preventDefault()
     setIsDragging(false)
     setIsResizing(true)
