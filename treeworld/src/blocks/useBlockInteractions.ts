@@ -26,8 +26,7 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
   const [isResizing, setIsResizing] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const dragStart = useRef({ x: 0, y: 0 })
-  const blockStart = useRef({ x: 0, y: 0 })
+  const lastMouse = useRef({ x: 0, y: 0 })
   const resizeStart = useRef({ x: 0, y: 0 })
   const sizeStart = useRef({ width: 0, height: 0 })
 
@@ -47,18 +46,17 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
       if (!didDrag && (Math.abs(me.clientX - startX) > DRAG_THRESHOLD || Math.abs(me.clientY - startY) > DRAG_THRESHOLD)) {
         didDrag = true
         setIsDragging(true)
-        dragStart.current = { x: startX, y: startY }
-        blockStart.current = { x: block.x, y: block.y }
+        lastMouse.current = { x: startX, y: startY }
       }
       if (didDrag) {
-        const dx = (me.clientX - dragStart.current.x) / camera.zoom
-        const dy = (me.clientY - dragStart.current.y) / camera.zoom
+        const dx = (me.clientX - lastMouse.current.x) / camera.zoom
+        const dy = (me.clientY - lastMouse.current.y) / camera.zoom
         if (moveFn) {
           moveFn(block.id, dx, dy)
         } else {
-          updateBlock(block.id, { x: blockStart.current.x + dx, y: blockStart.current.y + dy })
+          updateBlock(block.id, { x: block.x + dx, y: block.y + dy })
         }
-        dragStart.current = { x: me.clientX, y: me.clientY }
+        lastMouse.current = { x: me.clientX, y: me.clientY }
       }
     }
 
@@ -136,9 +134,5 @@ export function useBlockInteractions(block: Block, options: BlockInteractionOpti
     titleBarMouseDown,
     handleResizeMouseDown,
     closeMenu,
-    // Expose for blocks that need manual drag control (e.g. NoteBlock body drag)
-    setIsDragging,
-    dragStart,
-    blockStart,
   }
 }
