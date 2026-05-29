@@ -15,9 +15,11 @@ import cpp from 'highlight.js/lib/languages/cpp'
 import csharp from 'highlight.js/lib/languages/csharp'
 import yaml from 'highlight.js/lib/languages/yaml'
 import markdown from 'highlight.js/lib/languages/markdown'
-import { useCanvasStore } from '../store'
 import type { Block } from '../store'
+import { useCanvasStore } from '../store'
 import BlockMenu from './BlockMenu'
+import ResizeHandle from './ResizeHandle'
+import { useBlockInteractions } from './useBlockInteractions'
 
 hljs.registerLanguage('javascript', javascript)
 hljs.registerLanguage('js', javascript)
@@ -49,202 +51,46 @@ interface CodeBlockProps {
   block: Block
 }
 
-const LANGUAGES = [
-  'auto',
-  'javascript',
-  'typescript',
-  'python',
-  'html',
-  'css',
-  'json',
-  'bash',
-  'sql',
-  'rust',
-  'go',
-  'java',
-  'cpp',
-  'csharp',
-  'yaml',
-  'markdown',
-  'plaintext',
-]
-
-const MIN_CODE_HEIGHT = 180
-const MIN_CODE_WIDTH = 260
+const LANGUAGES = ['auto', 'javascript', 'typescript', 'python', 'html', 'css', 'json', 'bash', 'sql', 'rust', 'go', 'java', 'cpp', 'csharp', 'yaml', 'markdown', 'plaintext']
 
 function detectLanguage(content: string): string {
-  try {
-    const result = hljs.highlightAuto(content.slice(0, 2000))
-
-    return result.language || 'plaintext'
-  } catch {
-    return 'plaintext'
-  }
+  try { return hljs.highlightAuto(content.slice(0, 2000)).language || 'plaintext' } catch { return 'plaintext' }
 }
 
 function highlightCode(content: string, language: string): string {
-  if (!content.trim()) {
-    return ''
-  }
-
+  if (!content.trim()) return ''
   try {
-    if (language === 'auto') {
-      const result = hljs.highlightAuto(content.slice(0, 5000))
-
-      return result.value
-    }
-
-    if (hljs.getLanguage(language)) {
-      return hljs.highlight(content, { language }).value
-    }
-  } catch {
-    // fall through
-  }
-
+    if (language === 'auto') return hljs.highlightAuto(content.slice(0, 5000)).value
+    if (hljs.getLanguage(language)) return hljs.highlight(content, { language }).value
+  } catch { /* fall through */ }
   return hljs.highlight(content, { language: 'plaintext' }).value
 }
 
 const CodeBlock: React.FC<CodeBlockProps> = ({ block }) => {
-  const { camera, updateBlock } = useCanvasStore()
-  const frontBlockId = useCanvasStore((s) => s.frontBlockId)
-  const clearFrontBlock = useCanvasStore((s) => s.clearFrontBlock)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const updateBlock = useCanvasStore((s) => s.updateBlock)
+  const { titleBarMouseDown, handleResizeMouseDown, isMenuOpen, zIndex, cursor, closeMenu } =
+    useBlockInteractions(block, { minWidth: 260, minHeight: 180 })
+
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(block.content)
   const [editTitle, setEditTitle] = useState(block.title)
-  const [isDragging, setIsDragging] = useState(false)
-  const [isResizing, setIsResizing] = useState(false)
   const [copied, setCopied] = useState(false)
   const [language, setLanguage] = useState(() => {
-    if (block.title && LANGUAGES.includes(block.title.toLowerCase())) {
-      return block.title.toLowerCase()
-    }
-
+    if (block.title && LANGUAGES.includes(block.title.toLowerCase())) return block.title.toLowerCase()
     return 'auto'
   })
-  const dragStart = useRef({ x: 0, y: 0 })
-  const blockStart = useRef({ x: 0, y: 0 })
-  const resizeStart = useRef({ x: 0, y: 0 })
-  const sizeStart = useRef({ width: 0, height: 0 })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const detectedLanguage = language === 'auto' ? detectLanguage(block.content) : language
   const highlighted = highlightCode(block.content, language)
 
   useEffect(() => {
-    if (isEditing) {
-      textareaRef.current?.focus()
-    }
+    if (isEditing) textareaRef.current?.focus()
   }, [isEditing])
-
-  useEffect(() => {
-    if (!isResizing) {
-      return
-    }
-
-    const handleResizeMove = (e: MouseEvent) => {
-      const dx = (e.clientX - resizeStart.current.x) / camera.zoom
-      const dy = (e.clientY - resizeStart.current.y) / camera.zoom
-
-      updateBlock(block.id, {
-        width: Math.max(MIN_CODE_WIDTH, sizeStart.current.width + dx),
-        height: Math.max(MIN_CODE_HEIGHT, sizeStart.current.height + dy),
-      })
-    }
-
-    const handleResizeEnd = () => {
-      setIsResizing(false)
-    }
-
-    window.addEventListener('mousemove', handleResizeMove)
-    window.addEventListener('mouseup', handleResizeEnd)
-
-    return () => {
-      window.removeEventListener('mousemove', handleResizeMove)
-      window.removeEventListener('mouseup', handleResizeEnd)
-    }
-  }, [block.id, camera.zoom, isResizing, updateBlock])
-
-  const titleBarMouseDown = (e: React.MouseEvent) => {
-    if (block.locked || e.button !== 0) {
-      return
-    }
-
-    e.stopPropagation()
-    const startX = e.clientX
-    const startY = e.clientY
-    let didDrag = false
-
-    const onMove = (me: MouseEvent) => {
-      if (!didDrag && (Math.abs(me.clientX - startX) > 4 || Math.abs(me.clientY - startY) > 4)) {
-        didDrag = true
-        setIsDragging(true)
-        dragStart.current = { x: startX, y: startY }
-        blockStart.current = { x: block.x, y: block.y }
-      }
-
-      if (didDrag) {
-        const dx = (me.clientX - dragStart.current.x) / camera.zoom
-        const dy = (me.clientY - dragStart.current.y) / camera.zoom
-        updateBlock(block.id, { x: blockStart.current.x + dx, y: blockStart.current.y + dy })
-        dragStart.current = { x: me.clientX, y: me.clientY }
-      }
-    }
-
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-
-      if (!didDrag) {
-        setIsMenuOpen(true)
-      }
-
-      setIsDragging(false)
-    }
-
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) {
-      return
-    }
-
-    const dx = (e.clientX - dragStart.current.x) / camera.zoom
-    const dy = (e.clientY - dragStart.current.y) / camera.zoom
-
-    updateBlock(block.id, {
-      x: blockStart.current.x + dx,
-      y: blockStart.current.y + dy,
-    })
-    dragStart.current = { x: e.clientX, y: e.clientY }
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
-
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
-    if (block.locked) {
-      return
-    }
-
-    e.stopPropagation()
-    e.preventDefault()
-    setIsDragging(false)
-    setIsResizing(true)
-    resizeStart.current = { x: e.clientX, y: e.clientY }
-    sizeStart.current = { width: block.width, height: block.height }
-  }
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-
-    if (block.locked) {
-      return
-    }
-
+    if (block.locked) return
     setEditContent(block.content)
     setEditTitle(block.title)
     setIsEditing(true)
@@ -252,10 +98,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ block }) => {
 
   const handleBlur = () => {
     setIsEditing(false)
-
-    if (!block.locked) {
-      updateBlock(block.id, { content: editContent, title: editTitle || detectedLanguage })
-    }
+    if (!block.locked) updateBlock(block.id, { content: editContent, title: editTitle || detectedLanguage })
   }
 
   const handleCopy = (e: React.MouseEvent) => {
@@ -285,65 +128,30 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ block }) => {
         borderRadius: '6px',
         backgroundColor: '#1e1e2e',
         boxShadow: '0 18px 36px rgba(15, 23, 42, 0.28)',
-        cursor: block.locked ? 'default' : isResizing ? 'nwse-resize' : isDragging ? 'grabbing' : 'grab',
+        cursor,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        zIndex: isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1,
+        zIndex,
       }}
       onMouseDown={titleBarMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
     >
-      {isMenuOpen && <BlockMenu block={block} onClose={() => { setIsMenuOpen(false); clearFrontBlock() }} />}
+      {isMenuOpen && <BlockMenu block={block} onClose={closeMenu} />}
       <div
         className="code-block-header"
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
         onDoubleClick={handleDoubleClick}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '6px 12px',
-          borderBottom: '1px solid #313244',
-          backgroundColor: '#181825',
-          flexShrink: 0,
-          gap: '8px',
-        }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', borderBottom: '1px solid #313244', backgroundColor: '#181825', flexShrink: 0, gap: '8px' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
-          <span
-            style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              backgroundColor: '#f38ba8',
-              flexShrink: 0,
-            }}
-          />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f38ba8', flexShrink: 0 }} />
           <select
             value={language}
             onChange={handleLanguageChange}
             onMouseDown={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
-            style={{
-              background: '#313244',
-              border: '1px solid #45475a',
-              borderRadius: '4px',
-              color: '#cdd6f4',
-              fontSize: '11px',
-              padding: '2px 6px',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
+            style={{ background: '#313244', border: '1px solid #45475a', borderRadius: '4px', color: '#cdd6f4', fontSize: '11px', padding: '2px 6px', cursor: 'pointer', outline: 'none' }}
           >
-            {LANGUAGES.map((lang) => (
-              <option key={lang} value={lang}>
-                {lang}
-              </option>
-            ))}
+            {LANGUAGES.map((lang) => <option key={lang} value={lang}>{lang}</option>)}
           </select>
         </div>
         <button
@@ -351,82 +159,28 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ block }) => {
           onClick={handleCopy}
           onMouseDown={(e) => e.stopPropagation()}
           onDoubleClick={(e) => e.stopPropagation()}
-          style={{
-            background: copied ? '#a6e3a1' : '#313244',
-            border: '1px solid #45475a',
-            borderRadius: '4px',
-            color: copied ? '#1e1e2e' : '#cdd6f4',
-            fontSize: '11px',
-            padding: '2px 8px',
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
+          style={{ background: copied ? '#a6e3a1' : '#313244', border: '1px solid #45475a', borderRadius: '4px', color: copied ? '#1e1e2e' : '#cdd6f4', fontSize: '11px', padding: '2px 8px', cursor: 'pointer', flexShrink: 0 }}
         >
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <div
-        style={{
-          flex: 1,
-          overflow: 'auto',
-          padding: '12px 14px',
-        }}
-        onDoubleClick={handleDoubleClick}
-      >
+      <div style={{ flex: 1, overflow: 'auto', padding: '12px 14px' }} onDoubleClick={handleDoubleClick}>
         {isEditing ? (
           <textarea
             ref={textareaRef}
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             onBlur={handleBlur}
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              background: 'transparent',
-              color: '#cdd6f4',
-              fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", Monaco, Menlo, "Ubuntu Mono", monospace',
-              fontSize: '13px',
-              lineHeight: '1.6',
-              tabSize: 2,
-            }}
+            style={{ width: '100%', height: '100%', border: 'none', outline: 'none', resize: 'none', background: 'transparent', color: '#cdd6f4', fontFamily: '"JetBrains Mono", "Fira Code", Monaco, Menlo, monospace', fontSize: '13px', lineHeight: '1.6', tabSize: 2 }}
             spellCheck={false}
           />
         ) : (
-          <pre
-            style={{
-              margin: 0,
-              fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", Monaco, Menlo, "Ubuntu Mono", monospace',
-              fontSize: '13px',
-              lineHeight: '1.6',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              color: '#cdd6f4',
-            }}
-          >
+          <pre style={{ margin: 0, fontFamily: '"JetBrains Mono", "Fira Code", Monaco, Menlo, monospace', fontSize: '13px', lineHeight: '1.6', whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#cdd6f4' }}>
             <code dangerouslySetInnerHTML={{ __html: highlighted || '<span style="color:#6c7086">Empty code block</span>' }} />
           </pre>
         )}
       </div>
-      <div
-        aria-label="Resize code block"
-        title="Resize"
-        onMouseDown={handleResizeMouseDown}
-        onDoubleClick={(e) => e.stopPropagation()}
-        style={{
-          position: 'absolute',
-          right: 0,
-          bottom: 0,
-          width: '18px',
-          height: '18px',
-          cursor: block.locked ? 'default' : 'nwse-resize',
-          opacity: block.locked ? 0.35 : 1,
-          background:
-            'linear-gradient(135deg, transparent 0 45%, #89b4fa 45% 55%, transparent 55% 100%)',
-        }}
-      />
+      <ResizeHandle block={block} onMouseDown={handleResizeMouseDown} color="#89b4fa" />
     </div>
   )
 }

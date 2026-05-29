@@ -1,7 +1,9 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useLayoutEffect, useRef, useState } from 'react'
 import { useCanvasStore } from '../store'
 import type { Block } from '../store'
 import BlockMenu from './BlockMenu'
+import ResizeHandle from './ResizeHandle'
+import { useBlockInteractions } from './useBlockInteractions'
 
 interface BubbleBlockProps {
   block: Block
@@ -12,135 +14,36 @@ const MIN_WIDTH = 120
 const MAX_WIDTH = 320
 
 const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
-  const { camera, updateBlock } = useCanvasStore()
-  const frontBlockId = useCanvasStore((s) => s.frontBlockId)
-  const clearFrontBlock = useCanvasStore((s) => s.clearFrontBlock)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const updateBlock = useCanvasStore((s) => s.updateBlock)
+  const { titleBarMouseDown, handleResizeMouseDown, isResizing, isMenuOpen, zIndex, cursor, closeMenu } =
+    useBlockInteractions(block, { minWidth: MIN_WIDTH, minHeight: MIN_HEIGHT })
+
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(block.content)
-  const [isDragging, setIsDragging] = useState(false)
-  const [isResizing, setIsResizing] = useState(false)
   const measureRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const dragStart = useRef({ x: 0, y: 0 })
-  const blockStart = useRef({ x: 0, y: 0 })
-  const resizeStart = useRef({ x: 0, y: 0 })
-  const sizeStart = useRef({ width: 0, height: 0 })
 
   useLayoutEffect(() => {
-    if (isResizing || block.locked) {
-      return
-    }
-
+    if (isResizing || block.locked) return
     const measuredWidth = measureRef.current?.scrollWidth ?? 0
     const measuredHeight = measureRef.current?.scrollHeight ?? 0
     const nextWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, measuredWidth + 28))
     const nextHeight = Math.max(MIN_HEIGHT, measuredHeight + 20)
-
     if (Math.abs(block.width - nextWidth) > 4 || Math.abs(block.height - nextHeight) > 4) {
       updateBlock(block.id, { width: nextWidth, height: nextHeight })
     }
   }, [block.content, block.height, block.id, block.locked, block.width, isResizing, updateBlock])
 
-  useEffect(() => {
-    if (!isResizing) {
-      return
-    }
-
-    const handleResizeMove = (e: MouseEvent) => {
-      const dx = (e.clientX - resizeStart.current.x) / camera.zoom
-      const dy = (e.clientY - resizeStart.current.y) / camera.zoom
-
-      updateBlock(block.id, {
-        width: Math.max(MIN_WIDTH, sizeStart.current.width + dx),
-        height: Math.max(MIN_HEIGHT, sizeStart.current.height + dy),
-      })
-    }
-
-    const handleResizeEnd = () => {
-      setIsResizing(false)
-    }
-
-    window.addEventListener('mousemove', handleResizeMove)
-    window.addEventListener('mouseup', handleResizeEnd)
-
-    return () => {
-      window.removeEventListener('mousemove', handleResizeMove)
-      window.removeEventListener('mouseup', handleResizeEnd)
-    }
-  }, [block.id, camera.zoom, isResizing, updateBlock])
-
-  const titleBarMouseDown = (e: React.MouseEvent) => {
-    if (block.locked || e.button !== 0) {
-      return
-    }
-
-    e.stopPropagation()
-    const startX = e.clientX
-    const startY = e.clientY
-    let didDrag = false
-
-    const onMove = (me: MouseEvent) => {
-      if (!didDrag && (Math.abs(me.clientX - startX) > 4 || Math.abs(me.clientY - startY) > 4)) {
-        didDrag = true
-        setIsDragging(true)
-        dragStart.current = { x: startX, y: startY }
-        blockStart.current = { x: block.x, y: block.y }
-      }
-
-      if (didDrag) {
-        const dx = (me.clientX - dragStart.current.x) / camera.zoom
-        const dy = (me.clientY - dragStart.current.y) / camera.zoom
-        updateBlock(block.id, { x: blockStart.current.x + dx, y: blockStart.current.y + dy })
-        dragStart.current = { x: me.clientX, y: me.clientY }
-      }
-    }
-
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-
-      if (!didDrag) {
-        setIsMenuOpen(true)
-      }
-
-      setIsDragging(false)
-    }
-
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-  }
-
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-
-    if (block.locked) {
-      return
-    }
-
+    if (block.locked) return
     setEditContent(block.content)
     setIsEditing(true)
   }
 
   const handleBlur = () => {
     setIsEditing(false)
-
-    if (!block.locked) {
-      updateBlock(block.id, { content: editContent })
-    }
-  }
-
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
-    if (block.locked) {
-      return
-    }
-
-    e.stopPropagation()
-    e.preventDefault()
-    setIsDragging(false)
-    setIsResizing(true)
-    resizeStart.current = { x: e.clientX, y: e.clientY }
-    sizeStart.current = { width: block.width, height: block.height }
+    if (!block.locked) updateBlock(block.id, { content: editContent })
   }
 
   const displayText = block.content || 'PS...'
@@ -148,19 +51,10 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
   return (
     <div
       className="physical-block bubble-block"
-      style={{
-        position: 'absolute',
-        left: block.x,
-        top: block.y,
-        width: block.width,
-        height: block.height,
-        cursor: block.locked ? 'default' : isResizing ? 'nwse-resize' : isDragging ? 'grabbing' : 'grab',
-        zIndex: isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1,
-      }}
+      style={{ position: 'absolute', left: block.x, top: block.y, width: block.width, height: block.height, cursor, zIndex }}
       onMouseDown={titleBarMouseDown}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Speech bubble */}
       <div
         style={{
           position: 'relative',
@@ -176,33 +70,8 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
           overflow: 'hidden',
         }}
       >
-        {/* Triangle pointer */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '-7px',
-            left: '20px',
-            width: 0,
-            height: 0,
-            borderLeft: '7px solid transparent',
-            borderRight: '7px solid transparent',
-            borderTop: block.locked
-              ? '7px solid #f97316'
-              : '7px solid #c7d2fe',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '-5px',
-            left: '21px',
-            width: 0,
-            height: 0,
-            borderLeft: '6px solid transparent',
-            borderRight: '6px solid transparent',
-            borderTop: block.locked ? '6px solid #fff3e0' : '6px solid #f0f4ff',
-          }}
-        />
+        <div style={{ position: 'absolute', bottom: '-7px', left: '20px', width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderTop: block.locked ? '7px solid #f97316' : '7px solid #c7d2fe' }} />
+        <div style={{ position: 'absolute', bottom: '-5px', left: '21px', width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: block.locked ? '6px solid #fff3e0' : '6px solid #f0f4ff' }} />
 
         {isEditing ? (
           <textarea
@@ -212,73 +81,25 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
             onBlur={handleBlur}
             autoFocus
             onMouseDown={(e) => e.stopPropagation()}
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              background: 'transparent',
-              fontFamily: '"Inter", system-ui, sans-serif',
-              fontSize: '14px',
-              lineHeight: '1.5',
-              color: '#312e81',
-            }}
+            style={{ width: '100%', height: '100%', border: 'none', outline: 'none', resize: 'none', background: 'transparent', fontFamily: '"Inter", system-ui, sans-serif', fontSize: '14px', lineHeight: '1.5', color: '#312e81' }}
           />
         ) : (
-          <span
-            style={{
-              fontFamily: '"Inter", system-ui, sans-serif',
-              fontSize: '14px',
-              lineHeight: '1.5',
-              color: '#312e81',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          >
+          <span style={{ fontFamily: '"Inter", system-ui, sans-serif', fontSize: '14px', lineHeight: '1.5', color: '#312e81', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
             {displayText}
           </span>
         )}
       </div>
 
-      {/* Hidden measure element for auto-sizing */}
       <div
         ref={measureRef}
         aria-hidden
-        style={{
-          position: 'absolute',
-          visibility: 'hidden',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          fontFamily: '"Inter", system-ui, sans-serif',
-          fontSize: '14px',
-          lineHeight: '1.5',
-          padding: '10px 16px',
-          maxWidth: `${MAX_WIDTH}px`,
-          minWidth: `${MIN_WIDTH - 28}px`,
-        }}
+        style={{ position: 'absolute', visibility: 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: '"Inter", system-ui, sans-serif', fontSize: '14px', lineHeight: '1.5', padding: '10px 16px', maxWidth: MAX_WIDTH, minWidth: MIN_WIDTH - 28 }}
       >
         {displayText}
       </div>
 
-      {isMenuOpen && <BlockMenu block={block} onClose={() => { setIsMenuOpen(false); clearFrontBlock() }} />}
-
-      <div
-        aria-label="Resize bubble block"
-        title="Resize"
-        onMouseDown={handleResizeMouseDown}
-        onDoubleClick={(e) => e.stopPropagation()}
-        style={{
-          position: 'absolute',
-          right: 0,
-          bottom: 0,
-          width: '14px',
-          height: '14px',
-          cursor: block.locked ? 'default' : 'nwse-resize',
-          opacity: block.locked ? 0.3 : 0.6,
-          background: 'linear-gradient(135deg, transparent 0 45%, #818cf8 45% 55%, transparent 55% 100%)',
-        }}
-      />
+      {isMenuOpen && <BlockMenu block={block} onClose={closeMenu} />}
+      <ResizeHandle block={block} onMouseDown={handleResizeMouseDown} color="#818cf8" size={14} />
     </div>
   )
 }
