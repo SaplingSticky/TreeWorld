@@ -1,5 +1,7 @@
 # 🌳 TreeWorld
 
+**[English](README.en.md)** | **中文**
+
 **AI 驱动的无限画布，人类与 AI 共享创意空间。**
 
 TreeWorld 是一个 Miro 风格的无限画布应用，集成了 AI Agent。你可以在画布上自由排列 Markdown 笔记、代码片段、图片、表格、HTML 组件等内容，然后与 AI Agent 协作——它可以搜索网页、规划多步任务、自动创建和修改画布模块。
