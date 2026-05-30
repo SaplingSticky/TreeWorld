@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: treeworld/package-lock.json
+
+      - name: Install dependencies
+        working-directory: treeworld
+        run: npm ci
+
+      - name: Lint
+        working-directory: treeworld
+        run: npm run lint
+
+      - name: Test
+        working-directory: treeworld
+        run: npm test
+
+      - name: Build
+        working-directory: treeworld
+        run: npm run build
