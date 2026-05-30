@@ -2,9 +2,11 @@
 
 **[English](README.en.md)** | **中文**
 
-**AI 驱动的无限画布，人类与 AI 共享创意空间。**
+**把想法摊开在桌面上，和 AI 一起整理它们。**
 
-TreeWorld 是一个 Miro 风格的无限画布应用，集成了 AI Agent。你可以在画布上自由排列 Markdown 笔记、代码片段、图片、表格、HTML 组件等内容，然后与 AI Agent 协作——它可以搜索网页、规划多步任务、自动创建和修改画布模块。
+TreeWorld 是一块无限大的桌面。你可以在上面随意铺开笔记、代码、图片、表格——像在真实桌面上摆弄纸片一样。然后叫来你的 AI 搭档，它会帮你搜索资料、规划方案，自动把内容整理到画布上。
+
+你不需要画流程图，不需要写文档模板。打开 TreeWorld，说出你想要什么，看着它在画布上一点点成型。
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite)
@@ -14,61 +16,39 @@ TreeWorld 是一个 Miro 风格的无限画布应用，集成了 AI Agent。你�
 
 ---
 
-## ✨ 功能特性
+## 它能做什么
 
-### 🎨 画布系统
+### 画布
 
-| 功能 | 说明 |
-|------|------|
-| **无限平移与缩放** | Alt+拖拽平移，滚轮缩放（0.1x ~ 3x），小地图导航 |
-| **11 种模块类型** | Markdown、Note、Bubble、HTML、SVG、Image、Code、Table、Link、Canvas 2D、Collection |
-| **拖拽与调整** | 标题栏拖拽移动，边角拖拽调整大小 |
-| **右键菜单** | 锁定/解锁、复制、删除 |
-| **撤销/重做** | Cmd+Z / Cmd+Shift+Z，50 步历史 |
-| **搜索** | Cmd+F 按内容搜索模块，点击跳转 |
-| **多画布** | 创建和切换多个独立画布 |
-| **导出** | 支持 JSON、Markdown、HTML 三种格式 |
-| **图片拖放** | 直接拖拽或粘贴图片文件到画布 |
-| **画布主题** | 软木 Cork / 深色皮革 Leather / 浅色亚麻 Linen |
+TreeWorld 的画布没有边界。你可以无限平移和缩放，用小地图随时找到自己的位置。所有内容以「模块」的形式存在——拖拽标题栏移动它们，拖拽边角调整大小，双击进入编辑。
 
-### 🤖 AI Agent
+画布上可以放很多种东西：Markdown 文档、便利贴、聊天气泡、代码块、数据表格、链接预览、SVG 图形、HTML 原型，甚至是可以运行 JavaScript 动画的 Canvas 2D 画板。还有 Collection，像一个软木板容器，把相关的模块归拢在一起。
 
-| 功能 | 说明 |
-|------|------|
-| **规划 → 确认 → 执行** | Agent 先展示计划卡片，用户确认后才执行操作 |
-| **网页搜索** | 基于 Tavily API，Agent 自动检测搜索意图并联网搜索 |
-| **多模型支持** | Anthropic (Claude)、OpenAI (GPT)、Ollama (本地模型) |
-| **浮动聊天** | 按 `/` 或 `Cmd+K` 打开聊天浮层 |
-| **画布命令** | Agent 可创建、更新、删除、查询、分组模块 |
-| **安全锁定** | 被锁定的模块不会被 Agent 修改 |
-| **IO 日志** | 设置面板可查看所有 Agent 请求/响应记录 |
+你做的每一步都可以撤销，画布会自动保存。支持多个画布之间的切换，也可以把画布导出为 JSON、Markdown 或 HTML。
 
-### 🧩 模块类型详解
+### AI Agent
 
-| 模块 | 说明 |
-|------|------|
-| **Markdown** | 富文本渲染，支持 `- [ ]` 交互式待办复选框 |
-| **Note** | 便利贴风格，带随机微旋转，纸钉美学 |
-| **Bubble** | 聊天气泡式简短消息，自动适应内容大小 |
-| **HTML** | 沙盒 iframe 渲染，严格 CSP 隔离，无网络访问 |
-| **SVG** | 内联 SVG 渲染，自动消毒（移除 script/foreignObject 等危险元素） |
-| **Image** | 拍立得风格图片展示，带随机微旋转 |
-| **Code** | highlight.js 语法高亮，按需懒加载语言包，支持 25+ 语言 |
-| **Table** | 结构化数据表格，JSON 格式存储，支持行/列增删和单元格编辑 |
-| **Link** | URL 预览卡片，显示域名、favicon 和页面预览 |
-| **Canvas 2D** | 编程式 Canvas 2D 图形，执行原始 JavaScript，支持 requestAnimationFrame 动画 |
-| **Collection** | 容器/分组模块，子模块跟随移动，可折叠，软木板美学 |
+按 `/` 或 `Cmd+K` 唤出聊天窗口，告诉 AI 你想做什么。
+
+它不是直接往画布上扔东西。AI 会先给你一个计划——要创建哪些模块、放在哪里、为什么选这种类型。你确认之后，它才会动手。如果计划不对，你可以要求修改，直到满意为止。
+
+AI 还能联网搜索。当你的问题涉及最新信息、技术文档、市场数据，它会自动搜索网页，把结果整合到回答中，并标注来源。
+
+你可以在三种 AI 后端之间选择：Anthropic 的 Claude、OpenAI 的 GPT 系列，或者通过 Ollama 连接本地模型。被锁定的模块不会被 AI 修改——你始终拥有最终控制权。
+
+### 视觉风格
+
+TreeWorld 不是冷冰冰的网格。Markdown 模块看起来像纸张，便利贴有微微的随机倾斜和图钉，图片是拍立得风格，Collection 像一块软木板。三种画布主题——软木、皮革、亚麻——给你不同的桌面质感。
 
 ---
 
-## 🚀 快速开始
+## 快速开始
 
-### 环境要求
+### 桌面版（推荐）
 
-- Node.js 18+
-- npm
+从 [Releases](https://github.com/SaplingSticky/TreeWorld/releases) 下载最新安装包，运行即可。
 
-### 安装与运行
+### 从源码运行
 
 ```bash
 cd treeworld
@@ -76,197 +56,48 @@ npm install
 npm run dev
 ```
 
-打开浏览器访问 [http://localhost:5173](http://localhost:5173)
+浏览器打开 [http://localhost:5173](http://localhost:5173)
 
-### 配置 AI（可选）
+### 配置 AI
 
-1. 点击左下角齿轮图标打开设置
-2. 选择 Provider（Anthropic / OpenAI / Ollama）
-3. 输入 API Key 和模型 ID
-4. 按 `/` 或 `Cmd+K` 开始与 Agent 对话
-
-或复制环境变量模板：
+点击左下角齿轮图标打开设置，选择 AI 提供商，填入 API Key。也可以在项目根目录创建 `.env` 文件：
 
 ```bash
-cp .env.example .env
-# 编辑 .env 填入你的 API Key
+VITE_ANTHROPIC_API_KEY=你的key
+VITE_OPENAI_API_KEY=你的key
+VITE_TAVILY_API_KEY=你的key    # 启用联网搜索
 ```
 
-### 环境变量
+### 桌面版开发
 
-| 变量 | 说明 |
-|------|------|
-| `VITE_ANTHROPIC_API_KEY` | Anthropic (Claude) API Key |
-| `VITE_OPENAI_API_KEY` | OpenAI API Key |
-| `VITE_TAVILY_API_KEY` | Tavily 搜索 API Key（启用联网搜索） |
-
-> 💡 API Key 也可以在应用内的设置面板中配置，无需 `.env` 文件。
+```bash
+npm run electron:dev          # 开发模式
+npm run electron:build:win    # 打包 Windows 安装包
+```
 
 ---
 
-## 🖥️ Electron 桌面版
-
-TreeWorld 支持打包为 Electron 桌面应用。
-
-### 开发模式
-
-```bash
-npm run electron:dev
-```
-
-同时启动 Vite 开发服务器和 Electron 窗口。
-
-### 构建安装包
-
-```bash
-# Windows NSIS 安装包
-npm run electron:build:win
-
-# 通用构建
-npm run electron:build
-```
-
-### 桌面版特性
-
-- 最小化到系统托盘（不退出应用）
-- 全局快捷键 `Cmd+Shift+T` 唤起窗口
-- 原生文件保存/打开对话框
-- 上下文隔离，安全的 preload 脚本
-
----
-
-## ⌨️ 快捷键
+## 快捷键
 
 | 快捷键 | 功能 |
 |--------|------|
 | `/` 或 `Cmd+K` | 打开 AI 聊天 |
-| `Cmd+Z` | 撤销 |
-| `Cmd+Shift+Z` | 重做 |
+| `Cmd+Z` / `Cmd+Shift+Z` | 撤销 / 重做 |
 | `Cmd+F` | 搜索模块 |
-| `Cmd+0` | 重置缩放 |
-| `Cmd+1` | 适应全部 |
-| `Escape` | 关闭菜单/取消选择 |
-| `Delete` | 删除选中模块 |
+| `Cmd+0` / `Cmd+1` | 重置缩放 / 适应全部 |
 | `Alt+拖拽` | 平移画布 |
 | `滚轮` | 缩放画布 |
-| 双击模块内容 | 编辑模块 |
-| 点击标题栏 | 打开模块菜单 |
+| 双击 | 编辑模块 |
+| `Escape` | 关闭菜单 |
 
 ---
 
-## 🏗️ 技术栈
+## 技术栈
 
-| 层级 | 技术 | 版本 |
-|------|------|------|
-| 框架 | React + TypeScript | 19 / 6 |
-| 构建 | Vite | 8 |
-| 状态管理 | Zustand | 5 |
-| LLM SDK | Anthropic SDK | 0.95 |
-| LLM SDK | OpenAI SDK | 6.37 |
-| 搜索 | Tavily API | — |
-| 语法高亮 | highlight.js | 11 |
-| Markdown | react-markdown | 10 |
-| 桌面 | Electron + electron-builder | 42 / 26 |
-| 测试 | Vitest | 4 |
-| E2E | Playwright | 1.60 |
+React 19 · TypeScript · Vite · Zustand · Anthropic SDK · OpenAI SDK · Tavily · highlight.js · react-markdown · Electron
 
 ---
 
-## 📁 项目结构
-
-```
-TreeWorld/
-├── treeworld/                  # 应用主目录
-│   ├── electron/               # Electron 主进程
-│   │   ├── main.ts             #   窗口创建、托盘、全局快捷键
-│   │   └── preload.ts          #   上下文桥接（文件对话框、系统信息）
-│   ├── src/
-│   │   ├── agent/              # AI Agent 系统
-│   │   │   ├── anthropic.ts    #   Anthropic (Claude) 集成
-│   │   │   ├── openai.ts       #   OpenAI / Ollama 集成
-│   │   │   ├── commands.ts     #   画布命令执行引擎
-│   │   │   ├── prompt.ts       #   系统提示词
-│   │   │   ├── response.ts     #   响应解析
-│   │   │   ├── search.ts       #   Tavily 网页搜索
-│   │   │   ├── ioLog.ts        #   IO 日志记录
-│   │   │   └── types.ts        #   类型定义
-│   │   ├── blocks/             # 11 种模块组件
-│   │   │   ├── MarkdownBlock.tsx
-│   │   │   ├── CodeBlock.tsx
-│   │   │   ├── HtmlBlock.tsx
-│   │   │   ├── SvgBlock.tsx
-│   │   │   ├── ImageBlock.tsx
-│   │   │   ├── TableBlock.tsx
-│   │   │   ├── LinkBlock.tsx
-│   │   │   ├── BubbleBlock.tsx
-│   │   │   ├── NoteBlock.tsx
-│   │   │   ├── CollectionBlock.tsx
-│   │   │   ├── Canvas2DBlock.tsx
-│   │   │   ├── BlockMenu.tsx
-│   │   │   └── ResizeHandle.tsx
-│   │   ├── canvas/
-│   │   │   ├── Canvas.tsx      # 主画布（平移/缩放/小地图/搜索）
-│   │   │   └── camera.ts       # 坐标变换
-│   │   ├── chat/
-│   │   │   └── FloatingInput.tsx  # 浮动聊天面板
-│   │   ├── home/
-│   │   │   └── HomePage.tsx    # 首页（画布管理）
-│   │   ├── settings/
-│   │   │   └── SettingsPanel.tsx  # 设置面板
-│   │   ├── __tests__/          # 单元测试
-│   │   ├── store.ts            # Zustand 全局状态
-│   │   ├── canvasFiles.ts      # 导出功能（JSON/MD/HTML）
-│   │   ├── App.tsx             # 根组件
-│   │   ├── main.tsx            # 入口文件
-│   │   ├── index.css           # 全局样式
-│   │   └── b3-physical.css     # 物理材质主题样式
-│   ├── public/                 # 静态资源
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── vitest.config.ts
-│   └── tsconfig.json
-├── LICENSE                     # MIT License
-└── README.md
-```
-
----
-
-## 🎨 画布主题
-
-TreeWorld 提供三种视觉主题，在设置面板的「画布」标签页切换：
-
-| 主题 | 风格 |
-|------|------|
-| 🟤 **Cork（软木）** | 温暖的软木板纹理，默认主题 |
-| ⚫ **Leather（皮革）** | 深色皮革质感 |
-| ⚪ **Linen（亚麻）** | 浅色亚麻织物 |
-
----
-
-## 📤 导出格式
-
-从画布顶栏的导出菜单中选择：
-
-- **JSON** — 完整画布文档，可重新导入
-- **Markdown** — 按位置排序的模块内容，代码块使用围栏语法
-- **HTML** — 自包含 HTML 文档，带内联样式
-
----
-
-## 🧪 测试
-
-```bash
-# 运行所有单元测试
-npm test
-
-# 监听模式
-npm run test:watch
-```
-
-测试覆盖：相机坐标变换、画布命令执行、AI 响应解析、Zustand Store 逻辑。
-
----
-
-## 📄 License
+## License
 
 [MIT](LICENSE) © 2026 CrazyLoveStudio

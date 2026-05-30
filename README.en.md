@@ -1,8 +1,10 @@
 # 🌳 TreeWorld
 
-**AI-powered infinite canvas — a shared creative space for humans and AI.**
+**Spread your ideas across an infinite surface. Let AI help you organize them.**
 
-TreeWorld is a Miro-style infinite canvas app with an integrated AI Agent. Freely arrange markdown notes, code snippets, images, tables, HTML widgets, and more on the canvas — then collaborate with an AI Agent that can search the web, plan multi-step tasks, and automatically create or modify canvas blocks.
+TreeWorld is an infinite canvas with no boundaries. Lay out notes, code, images, and tables freely — like shuffling papers on a real desk. Then bring in your AI collaborator: it searches the web, drafts a plan, and assembles content on the canvas for you.
+
+No flowchart templates. No document frameworks. Open TreeWorld, describe what you want, and watch it take shape.
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite)
@@ -12,61 +14,39 @@ TreeWorld is a Miro-style infinite canvas app with an integrated AI Agent. Freel
 
 ---
 
-## ✨ Features
+## What it does
 
-### 🎨 Canvas System
+### The canvas
 
-| Feature | Description |
-|---------|-------------|
-| **Infinite pan & zoom** | Alt+drag to pan, scroll wheel to zoom (0.1x ~ 3x), minimap navigation |
-| **11 block types** | Markdown, Note, Bubble, HTML, SVG, Image, Code, Table, Link, Canvas 2D, Collection |
-| **Drag & resize** | Drag by title bar to move, drag corners to resize |
-| **Context menu** | Lock/unlock, duplicate, delete |
-| **Undo / redo** | Cmd+Z / Cmd+Shift+Z, 50-step history |
-| **Search** | Cmd+F to search blocks by content, click to jump |
-| **Multi-canvas** | Create and switch between multiple independent canvases |
-| **Export** | JSON, Markdown, or HTML formats |
-| **Image drag & drop** | Drag or paste image files directly onto the canvas |
-| **Canvas themes** | Cork / Leather / Linen |
+Pan infinitely. Zoom from 0.1x to 3x. A minimap keeps you oriented.
 
-### 🤖 AI Agent
+Everything lives in **blocks** — drag by the title bar to move, drag corners to resize, double-click to edit. There are 11 types: rich Markdown notes, sticky notes with a pin-and-cork aesthetic, chat bubbles, code with syntax highlighting for 25+ languages, data tables, link preview cards, SVG graphics, sandboxed HTML prototypes, polaroid-style images, programmatic Canvas 2D animations, and Collections that group related blocks on a cork board.
 
-| Feature | Description |
-|---------|-------------|
-| **Plan → Confirm → Execute** | Agent shows a plan card first, user confirms before execution |
-| **Web search** | Powered by Tavily API, auto-detects search intent and searches the web |
-| **Multi-provider** | Anthropic (Claude), OpenAI (GPT), Ollama (local models) |
-| **Floating chat** | Press `/` or `Cmd+K` to open the chat overlay |
-| **Canvas commands** | Agent can create, update, delete, query, and group blocks |
-| **Lock safety** | Locked blocks cannot be modified by the agent |
-| **IO logs** | View all agent request/response records in Settings |
+Every action is undoable. The canvas auto-saves. Manage multiple canvases from the home page. Export your work as JSON, Markdown, or a self-contained HTML file.
 
-### 🧩 Block Types
+### The AI Agent
 
-| Block | Description |
-|-------|-------------|
-| **Markdown** | Rich text rendering, supports `- [ ]` interactive todo checkboxes |
-| **Note** | Sticky note style with random micro-rotation, pin & cork aesthetic |
-| **Bubble** | Chat-bubble style short messages, auto-sizes to content |
-| **HTML** | Sandboxed iframe rendering, strict CSP isolation, no network access |
-| **SVG** | Inline SVG rendering, auto-sanitized (removes script/foreignObject etc.) |
-| **Image** | Polaroid-style image display with random micro-rotation |
-| **Code** | highlight.js syntax highlighting, lazy-loads language packs, 25+ languages |
-| **Table** | Structured data table, JSON storage, add/delete rows & columns, inline editing |
-| **Link** | URL preview card showing domain, favicon, and page preview |
-| **Canvas 2D** | Programmatic Canvas 2D graphics, executes raw JavaScript, supports requestAnimationFrame |
-| **Collection** | Container/group block, children follow movement, collapsible, cork board aesthetic |
+Press `/` or `Cmd+K` to open the chat. Tell the AI what you need.
+
+It doesn't dump blocks onto your canvas blindly. The agent presents a **plan** first — what blocks to create, where to place them, why each type was chosen. You review it, confirm, and only then does it execute. If the plan isn't right, ask for revisions until it is.
+
+The agent can **search the web**. When your question involves recent information, technical docs, or market data, it searches automatically, weaves the results into its answer, and cites sources.
+
+Choose between three AI backends: Anthropic's Claude, OpenAI's GPT models, or local models via Ollama. Lock any block to prevent the agent from modifying it — you always have the final say.
+
+### The look and feel
+
+TreeWorld isn't a sterile grid. Markdown blocks look like paper. Sticky notes tilt slightly, held by pins. Images appear as polaroids. Collections are cork boards. Three canvas themes — Cork, Leather, Linen — set the mood of your workspace.
 
 ---
 
-## 🚀 Quick Start
+## Getting started
 
-### Prerequisites
+### Desktop app (recommended)
 
-- Node.js 18+
-- npm
+Download the latest installer from [Releases](https://github.com/SaplingSticky/TreeWorld/releases).
 
-### Install & Run
+### Run from source
 
 ```bash
 cd treeworld
@@ -76,195 +56,46 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-### Configure AI (optional)
+### Configure AI
 
-1. Click the gear icon (bottom-left) to open Settings
-2. Choose a provider (Anthropic / OpenAI / Ollama)
-3. Enter your API Key and Model ID
-4. Press `/` or `Cmd+K` to start chatting with the Agent
-
-Or copy the environment variable template:
+Click the gear icon (bottom-left) to open Settings. Choose your AI provider and enter your API key. Or create a `.env` file in the project root:
 
 ```bash
-cp .env.example .env
-# Edit .env with your API keys
+VITE_ANTHROPIC_API_KEY=your-key
+VITE_OPENAI_API_KEY=your-key
+VITE_TAVILY_API_KEY=your-key    # enables web search
 ```
 
-### Environment Variables
+### Desktop development
 
-| Variable | Description |
-|----------|-------------|
-| `VITE_ANTHROPIC_API_KEY` | Anthropic (Claude) API Key |
-| `VITE_OPENAI_API_KEY` | OpenAI API Key |
-| `VITE_TAVILY_API_KEY` | Tavily Search API Key (enables web search) |
-
-> 💡 API Keys can also be configured in the app's Settings panel — no `.env` file needed.
+```bash
+npm run electron:dev          # dev mode
+npm run electron:build:win    # build Windows installer
+```
 
 ---
 
-## 🖥️ Electron Desktop App
-
-TreeWorld can be packaged as an Electron desktop application.
-
-### Development Mode
-
-```bash
-npm run electron:dev
-```
-
-Starts both the Vite dev server and Electron window simultaneously.
-
-### Build Installer
-
-```bash
-# Windows NSIS installer
-npm run electron:build:win
-
-# Generic build
-npm run electron:build
-```
-
-### Desktop Features
-
-- Minimize to system tray (doesn't exit the app)
-- Global shortcut `Cmd+Shift+T` to bring up the window
-- Native file save/open dialogs
-- Context isolation with secure preload script
-
----
-
-## ⌨️ Keyboard Shortcuts
+## Keyboard shortcuts
 
 | Shortcut | Action |
 |----------|--------|
 | `/` or `Cmd+K` | Open AI chat |
-| `Cmd+Z` | Undo |
-| `Cmd+Shift+Z` | Redo |
+| `Cmd+Z` / `Cmd+Shift+Z` | Undo / Redo |
 | `Cmd+F` | Search blocks |
-| `Cmd+0` | Reset zoom |
-| `Cmd+1` | Fit all blocks |
-| `Escape` | Close menu / deselect |
-| `Delete` | Delete selected block |
+| `Cmd+0` / `Cmd+1` | Reset zoom / Fit all |
 | `Alt+Drag` | Pan canvas |
-| `Scroll` | Zoom canvas |
-| Double-click content | Edit block |
-| Click title bar | Open block menu |
+| `Scroll` | Zoom |
+| Double-click | Edit block |
+| `Escape` | Close menu |
 
 ---
 
-## 🏗️ Tech Stack
+## Tech stack
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Framework | React + TypeScript | 19 / 6 |
-| Build | Vite | 8 |
-| State Management | Zustand | 5 |
-| LLM SDK | Anthropic SDK | 0.95 |
-| LLM SDK | OpenAI SDK | 6.37 |
-| Search | Tavily API | — |
-| Syntax Highlighting | highlight.js | 11 |
-| Markdown | react-markdown | 10 |
-| Desktop | Electron + electron-builder | 42 / 26 |
-| Testing | Vitest | 4 |
-| E2E | Playwright | 1.60 |
+React 19 · TypeScript · Vite · Zustand · Anthropic SDK · OpenAI SDK · Tavily · highlight.js · react-markdown · Electron
 
 ---
 
-## 📁 Project Structure
-
-```
-TreeWorld/
-├── treeworld/                  # Main application directory
-│   ├── electron/               # Electron main process
-│   │   ├── main.ts             #   Window creation, tray, global shortcuts
-│   │   └── preload.ts          #   Context bridge (file dialogs, system info)
-│   ├── src/
-│   │   ├── agent/              # AI Agent system
-│   │   │   ├── anthropic.ts    #   Anthropic (Claude) integration
-│   │   │   ├── openai.ts       #   OpenAI / Ollama integration
-│   │   │   ├── commands.ts     #   Canvas command execution engine
-│   │   │   ├── prompt.ts       #   System prompts
-│   │   │   ├── response.ts     #   Response parsing
-│   │   │   ├── search.ts       #   Tavily web search
-│   │   │   ├── ioLog.ts        #   IO log recording
-│   │   │   └── types.ts        #   Type definitions
-│   │   ├── blocks/             # 11 block components
-│   │   │   ├── MarkdownBlock.tsx
-│   │   │   ├── CodeBlock.tsx
-│   │   │   ├── HtmlBlock.tsx
-│   │   │   ├── SvgBlock.tsx
-│   │   │   ├── ImageBlock.tsx
-│   │   │   ├── TableBlock.tsx
-│   │   │   ├── LinkBlock.tsx
-│   │   │   ├── BubbleBlock.tsx
-│   │   │   ├── NoteBlock.tsx
-│   │   │   ├── CollectionBlock.tsx
-│   │   │   ├── Canvas2DBlock.tsx
-│   │   │   ├── BlockMenu.tsx
-│   │   │   └── ResizeHandle.tsx
-│   │   ├── canvas/
-│   │   │   ├── Canvas.tsx      # Main canvas (pan/zoom/minimap/search)
-│   │   │   └── camera.ts       # Coordinate transforms
-│   │   ├── chat/
-│   │   │   └── FloatingInput.tsx  # Floating chat panel
-│   │   ├── home/
-│   │   │   └── HomePage.tsx    # Home page (canvas management)
-│   │   ├── settings/
-│   │   │   └── SettingsPanel.tsx  # Settings panel
-│   │   ├── __tests__/          # Unit tests
-│   │   ├── store.ts            # Zustand global state
-│   │   ├── canvasFiles.ts      # Export (JSON/MD/HTML)
-│   │   ├── App.tsx             # Root component
-│   │   ├── main.tsx            # Entry point
-│   │   ├── index.css           # Global styles
-│   │   └── b3-physical.css     # Physical material theme styles
-│   ├── public/                 # Static assets
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── vitest.config.ts
-│   └── tsconfig.json
-├── LICENSE                     # MIT License
-└── README.md
-```
-
----
-
-## 🎨 Canvas Themes
-
-TreeWorld offers three visual themes, switchable in Settings → Canvas:
-
-| Theme | Style |
-|-------|-------|
-| 🟤 **Cork** | Warm cork board texture, default theme |
-| ⚫ **Leather** | Dark leather texture |
-| ⚪ **Linen** | Light linen fabric |
-
----
-
-## 📤 Export Formats
-
-From the canvas top bar export menu:
-
-- **JSON** — Full canvas document, can be re-imported
-- **Markdown** — Blocks sorted by position, code blocks use fenced syntax
-- **HTML** — Self-contained HTML document with inline styles
-
----
-
-## 🧪 Testing
-
-```bash
-# Run all unit tests
-npm test
-
-# Watch mode
-npm run test:watch
-```
-
-Test coverage: camera coordinate transforms, canvas command execution, AI response parsing, Zustand store logic.
-
----
-
-## 📄 License
+## License
 
 [MIT](LICENSE) © 2026 CrazyLoveStudio
