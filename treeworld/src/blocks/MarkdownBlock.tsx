@@ -23,6 +23,10 @@ type MarkdownSegment =
 const todoLinePattern = /^(\s*)[-*+]\s+\[( |x|X)\]\s+(.*)$/
 const autoPairs: Record<string, string> = { '(': ')', '[': ']' }
 const MIN_HEIGHT = 180
+const markdownComponents = {
+  input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  li: ({ children, ...props }: React.LiHTMLAttributes<HTMLLIElement> & { children?: React.ReactNode }) => <li {...props}>{children}</li>,
+}
 const MIN_WIDTH = 220
 const CONTENT_VERTICAL_PADDING = 24
 
@@ -141,6 +145,10 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
   }
 
   // ── Drag via window listeners (survives fast mouse movement) ──
+  const dragCleanupRef = useRef<(() => void) | null>(null)
+
+  useEffect(() => () => { dragCleanupRef.current?.() }, [])
+
   const startDrag = (e: React.MouseEvent, fromTitleBar: boolean) => {
     if (block.locked || isEditing || e.button !== 0) return
     e.preventDefault()
@@ -175,6 +183,7 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
       window.removeEventListener('mouseleave', onLeave)
+      dragCleanupRef.current = null
     }
 
     const onUp = () => {
@@ -187,6 +196,7 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
       if (le.relatedTarget === null) { cleanup(); setIsDragging(false) }
     }
 
+    dragCleanupRef.current = cleanup
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
     window.addEventListener('mouseleave', onLeave)
@@ -200,21 +210,18 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
   // ── Editing ──
   const handleDoubleClick = (e: React.MouseEvent) => { e.stopPropagation(); if (!block.locked) { setEditContent(block.content); setIsEditing(true) } }
   const handleTitleDoubleClick = (e: React.MouseEvent) => { e.stopPropagation(); if (!block.locked && !isEditing) { setIsDragging(false); setIsResizing(false); updateBlock(block.id, { heightMode: 'auto' }) } }
-  const handleBlur = () => { setIsEditing(false); if (!block.locked) updateBlock(block.id, { content: editContent }) }
+  const handleBlur = () => { setIsEditing(false); if (!block.locked) updateBlock(block.id, { content: editContent, title: editTitle }) }
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleBlur() } }
 
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = e.currentTarget; const { selectionStart, selectionEnd } = textarea
-    const openPair = autoPairs[e.key]
-    if (openPair) {
-      const closePair = autoPairs[openPair as keyof typeof autoPairs]
-      if (closePair) {
-        e.preventDefault()
-        const nextContent = `${editContent.slice(0, selectionStart)}${openPair}${closePair}${editContent.slice(selectionEnd)}`
-        setEditContent(nextContent)
-        requestAnimationFrame(() => { textarea.selectionStart = selectionStart + 1; textarea.selectionEnd = selectionStart + 1 })
-        return
-      }
+    const closePair = autoPairs[e.key]
+    if (closePair) {
+      e.preventDefault()
+      const nextContent = `${editContent.slice(0, selectionStart)}${e.key}${closePair}${editContent.slice(selectionEnd)}`
+      setEditContent(nextContent)
+      requestAnimationFrame(() => { textarea.selectionStart = selectionStart + 1; textarea.selectionEnd = selectionStart + 1 })
+      return
     }
     if (e.key === 'Enter') {
       const currentLineStart = editContent.lastIndexOf('\n', selectionStart - 1) + 1
@@ -243,7 +250,7 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
     const segments = buildMarkdownSegments(block.content)
     return segments.map((segment, i) => {
       if (segment.type === 'markdown') {
-        return <ReactMarkdown key={`md-${i}`} components={{ input: ({ ...props }) => <input {...props} />, li: ({ children, ...props }) => <li {...props}>{children}</li> }}>{preserveSoftLineBreaks(segment.content)}</ReactMarkdown>
+        return <ReactMarkdown key={`md-${i}`} components={markdownComponents}>{preserveSoftLineBreaks(segment.content)}</ReactMarkdown>
       }
       return (
         <ul className="task-list" key={`todos-${i}`}>
@@ -260,7 +267,7 @@ const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ block }) => {
     })
   }
 
-  const zIndex = isMenuOpen || frontBlockId === block.id ? 999 : isDragging || isResizing ? 1000 : 1
+  const zIndex = isDragging || isResizing ? 1000 : isMenuOpen || frontBlockId === block.id ? 999 : 1
   const cursor = block.locked ? 'default' : isResizing ? 'nwse-resize' : isDragging ? 'grabbing' : isEditing ? 'default' : 'grab'
   const userSelect = isDragging || isResizing ? ('none' as const) : undefined
 

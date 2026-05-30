@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && tsc -p tsconfig.electron.json && electron .\"",
+    "electron:build": "vite build && tsc -p tsconfig.electron.json && electron-builder",
+    "electron:build:win": "vite build && tsc -p tsconfig.electron.json && electron-builder --win"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",
@@ -19,12 +24,15 @@
     "react-markdown": "^10.1.0",
     "zustand": "^5.0.13"
   },
+  "main": "electron-dist/main.js",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "electron": "^42.3.0",
+    "electron-builder": "^26.8.1",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
@@ -32,6 +40,27 @@
     "playwright": "^1.60.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "vitest": "^4.1.7"
+  },
+  "build": {
+    "appId": "com.treeworld.app",
+    "productName": "TreeWorld",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron-dist/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

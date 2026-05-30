@@ -14,6 +14,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   code: 'Code',
   table: 'Table',
   link: 'Link',
+  canvas2d: 'Canvas2D',
 }
 
 function formatDate(timestamp: number): string {

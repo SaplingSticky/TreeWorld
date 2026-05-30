@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { recordAgentIoLog } from './ioLog'
-import { EXECUTION_SYSTEM_PROMPT, PLAN_SYSTEM_PROMPT, SYSTEM_PROMPT } from './prompt'
+import { buildPlanUserContent, EXECUTION_SYSTEM_PROMPT, PLAN_SYSTEM_PROMPT } from './prompt'
 import { parseAgentPlan, parseAgentResponse } from './response'
 import type { AgentPlan, AgentResponse, AgentSettings } from './types'
 
@@ -27,7 +27,7 @@ export async function askAnthropicAgent(
       model: settings.modelId || 'claude-sonnet-4-20250514',
       max_tokens: 1600,
       temperature: 0.2,
-      system: SYSTEM_PROMPT,
+      system: EXECUTION_SYSTEM_PROMPT,
       messages: [
         {
           role: 'user',
@@ -75,16 +75,6 @@ export async function askAnthropicAgent(
   }
 }
 
-function buildPlanUserContent(userInput: string, canvasContext: string, currentPlan?: AgentPlan): string {
-  return [
-    `Canvas context:\n${canvasContext}`,
-    currentPlan ? `Current plan to revise:\n${JSON.stringify(currentPlan, null, 2)}` : '',
-    `User request:\n${userInput}`,
-  ]
-    .filter(Boolean)
-    .join('\n\n')
-}
-
 async function requestAnthropicText(systemPrompt: string, userContent: string, settings: AgentSettings): Promise<string> {
   const anthropic = new Anthropic({
     apiKey: settings.apiKey,
@@ -105,10 +95,16 @@ async function requestAnthropicText(systemPrompt: string, userContent: string, s
     ],
   })
 
-  return response.content
+  const text = response.content
     .filter((part) => part.type === 'text')
     .map((part) => part.text)
     .join('\n')
+
+  if (!text) {
+    throw new Error('Anthropic 返回了空响应（无文本内容）。请重试。')
+  }
+
+  return text
 }
 
 export async function askAnthropicPlan(

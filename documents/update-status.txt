@@ -100,3 +100,48 @@
 18:00 重构全部 10 个块组件使用共享 hook，净减少 ~1700 行代码
 18:00 删除未使用的 BlockLockButton.tsx 和 useBlockClickDrag.ts
 18:00 修复拖拽问题：所有块统一使用 window 级鼠标监听器
+# 2026-5-29 (round 8 - codebase audit & bug fixes)
+21:00 全面审查 store.ts、14 个块组件、agent 代码、Canvas、Settings、HomePage
+21:00 store.ts: 修复 deleteBlock 缺失 undo 记录（删除不可撤销）
+21:00 store.ts: 修复画布切换时 undo/redo 栈未清空（createCanvas/loadCanvas/closeCanvas/importCanvas/deleteCanvas）
+21:00 store.ts: 为 ~15 处 localStorage 调用添加 safeGetItem/safeSetItem/safeRemoveItem 包装，防止 QuotaExceededError 崩溃
+21:00 store.ts: duplicateBlock 不再复制 layoutGroupId，防止副本参与自动布局冲突
+21:00 TableBlock: 修复排序后编辑单元格写入错误行的严重数据损坏 bug（indexOf 引用比较 → originalIndices 映射）
+21:00 HtmlBlock: 修复 iframe 加载失败时无限 5 秒重载循环（添加 MAX_RETRIES=3 限制）
+21:00 ImageBlock: 修复图片 URL 变更后错误状态不重置（为 img 添加 key={block.content} 强制重新挂载）
+21:00 MarkdownBlock: 修复拖拽监听器泄漏（添加 useEffect cleanup）；修复 handleBlur 不保存 editTitle；修复 auto-pairs 逻辑错误；稳定 ReactMarkdown components 引用；统一 z-index 顺序
+21:00 CodeBlock: 为 highlight.js 添加 useMemo 避免每次渲染重新高亮；clipboard 添加 .catch() 错误处理和 cleanup
+21:00 LinkBlock: iframe sandbox 移除 allow-same-origin（与 allow-scripts 组合会绕过沙箱）
+21:00 CollectionBlock: z-index 默认值从 0 改为 1，与其他块一致
+21:00 Anthropic: requestAnthropicText 添加空响应 guard；Tavily: searchWeb 添加 try/catch 网络和 JSON 解析错误处理
+21:00 全部变更通过 tsc + eslint + vite build 验证
+# 2026-5-29 (round 9 - remaining audit fixes)
+22:00 BubbleBlock: 移除 useLayoutEffect 中 block.width/height 依赖，改用 getState() 调用 updateBlock，避免拖拽时触发不必要的尺寸重算
+22:00 Canvas: searchResults memo 在搜索关闭时跳过计算
+22:00 Canvas: 修复 wheel 事件监听器泄漏，添加 cleanup 函数
+22:00 agent/commands.ts: buildCanvasContext 添加 4000 字符上限，防止大画布 token 爆炸
+22:00 Settings: "已保存"提示 2 秒后自动消失
+22:00 集合块 UI: 移除所有 repeating-linear-gradient/conic-gradient 和 radial-gradient 纹理，改为纯色背景
+22:00 全部变更通过 tsc + eslint + vite build 验证
+# 2026-5-29 (round 10 - code splitting, cleanup, accessibility)
+23:00 代码拆分: 10 个块组件改为 React.lazy 动态加载，主 bundle 从 738KB 降至 510KB（-31%）
+23:00 工具栏图标: 为 SVG/Code/Table/Link 添加独立图标（之前共用同一个通用立方体图标）
+23:00 代码清理: 移除 SYSTEM_PROMPT 别名（与 EXECUTION_SYSTEM_PROMPT 重复），提取 buildPlanUserContent 为共享函数
+23:00 无障碍: BlockMenu 添加 role=menu/menuitem、箭头键导航、打开时自动聚焦第一项
+23:00 无障碍: TableBlock 可排序列添加 aria-sort，SvgBlock 容器添加 role=img，LinkBlock ↗ 链接添加 aria-label，ResizeHandle 添加 role=separator
+23:00 全部变更通过 tsc + eslint + vite build 验证
+# 2026-5-29 (round 11 - full feature sweep)
+00:00 C4 Canvas2DBlock: 新增 canvas2d 块类型，支持 Agent 生成的 JS 在 <canvas> 上渲染，带沙箱执行和超时保护
+00:00 Canvas2D 支持 requestAnimationFrame 动画，变量: canvas, ctx, w, h
+00:00 Agent prompt/response/types 全链路集成 canvas2d 类型
+00:00 代码拆分优化: CodeBlock 语言包改为按需加载，84KB → 26KB（-69%）
+00:00 Canvas blockBounds 优化: 4 次 Math.min/max 改为单次 reduce
+00:00 buildCanvasContext 优化: 只推送视口内块 + 集合块，上限 30 块 / 4000 字符
+00:00 搜索高亮: Cmd+F 点击结果后在目标块上显示 1.5 秒蓝色脉冲动画
+00:00 图片拖拽上传: 支持拖放图片文件到画布创建 ImageBlock，支持剪贴板粘贴图片
+00:00 集合块折叠: 标题栏左侧 ▼ 按钮可折叠/展开子块，折叠时隐藏子块
+00:00 导出格式: 导出按钮改为下拉菜单，支持 JSON / Markdown / HTML 三种格式
+00:00 hasBlockOverlaps 优化: O(N²) 暴力扫描改为按 x 排序的扫描线算法
+00:00 单元测试: 安装 vitest，36 个测试覆盖 store/camera/agent response/buildCanvasContext
+00:00 D4 Electron 壳: 创建 electron/main.ts + preload.ts + tsconfig + 构建配置（依赖需手动安装）
+00:00 全部变更通过 tsc + eslint + vite build + vitest 验证

@@ -105,6 +105,8 @@ const SvgBlock: React.FC<SvgBlockProps> = ({ block }) => {
       >
         {sanitizedSvg ? (
           <div
+            role="img"
+            aria-label={block.title || 'SVG graphic'}
             dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
             style={{ height: '100%', width: '100%' }}
           />

@@ -41,18 +41,27 @@ const HtmlBlock: React.FC<HtmlBlockProps> = ({ block }) => {
 
   const [reloadToken, setReloadToken] = useState(0)
   const hasLoaded = useRef(false)
+  const retryCount = useRef(0)
+  const MAX_RETRIES = 3
   const displayTitle = (block.title || 'HTML').replace(/CRT\s+HTML/gi, 'HTML')
 
   useEffect(() => {
     hasLoaded.current = false
+    retryCount.current = 0
+    return undefined
+  }, [block.content])
+
+  useEffect(() => {
+    if (retryCount.current >= MAX_RETRIES) return undefined
     const timeout = window.setTimeout(() => {
       if (!hasLoaded.current) {
+        retryCount.current += 1
         setReloadToken((token) => token + 1)
       }
     }, 5000)
 
     return () => window.clearTimeout(timeout)
-  }, [block.content, reloadToken])
+  }, [reloadToken])
 
   return (
     <div

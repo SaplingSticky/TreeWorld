@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import type { AgentProvider } from '../agent/types'
 import { clearAgentIoLogs, getAgentIoLogs } from '../agent/ioLog'
 import type { AgentIoLogEntry } from '../agent/ioLog'
@@ -68,6 +68,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   const [draftSearchApiKey, setDraftSearchApiKey] = useState(agentSearchApiKey)
   const [draftCanvasTheme, setDraftCanvasTheme] = useState<CanvasTheme>(canvasTheme)
   const [savedMessage, setSavedMessage] = useState('')
+  const saveTimerRef = useRef<number | undefined>(undefined)
+  useEffect(() => () => { if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current) }, [])
   const [logEntries, setLogEntries] = useState<AgentIoLogEntry[]>(() => getAgentIoLogs())
   const providerLabel = draftProvider === 'anthropic' ? 'Anthropic' : draftProvider === 'ollama' ? 'Ollama' : 'OpenAI'
 
@@ -87,6 +89,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
     })
     setCanvasTheme(draftCanvasTheme)
     setSavedMessage(draftApiKey.trim() ? '已保存' : '已清空')
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = window.setTimeout(() => setSavedMessage(''), 2000)
   }
 
   const clear = () => {

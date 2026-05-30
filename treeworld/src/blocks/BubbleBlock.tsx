@@ -30,9 +30,10 @@ const BubbleBlock: React.FC<BubbleBlockProps> = ({ block }) => {
     const nextWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, measuredWidth + 28))
     const nextHeight = Math.max(MIN_HEIGHT, measuredHeight + 20)
     if (Math.abs(block.width - nextWidth) > 4 || Math.abs(block.height - nextHeight) > 4) {
-      updateBlock(block.id, { width: nextWidth, height: nextHeight })
+      useCanvasStore.getState().updateBlock(block.id, { width: nextWidth, height: nextHeight })
     }
-  }, [block.content, block.height, block.id, block.locked, block.width, isResizing, updateBlock])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- block.width/height intentionally excluded to avoid firing during drag
+  }, [block.content, block.id, block.locked, isResizing])
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation()

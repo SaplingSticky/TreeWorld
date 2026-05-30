@@ -1,4 +1,4 @@
-export type AgentBlockType = 'markdown' | 'note' | 'bubble' | 'image' | 'collection' | 'html' | 'svg' | 'code' | 'table' | 'link'
+export type AgentBlockType = 'markdown' | 'note' | 'bubble' | 'image' | 'collection' | 'html' | 'svg' | 'code' | 'table' | 'link' | 'canvas2d'
 export type AgentProvider = 'anthropic' | 'openai' | 'ollama'
 
 export interface AgentSettings {

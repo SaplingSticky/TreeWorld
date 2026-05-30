@@ -114,6 +114,7 @@ const LinkBlock: React.FC<LinkBlockProps> = ({ block }) => {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Open link in new tab"
             onMouseDown={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
             style={{ fontSize: '11px', color: '#6b7280', textDecoration: 'none', flexShrink: 0 }}
@@ -126,7 +127,7 @@ const LinkBlock: React.FC<LinkBlockProps> = ({ block }) => {
         {url ? (
           <iframe
             src={url}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            sandbox="allow-scripts allow-forms allow-popups"
             style={{ border: 'none', width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
             title={domain}
           />

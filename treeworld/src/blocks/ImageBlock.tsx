@@ -90,6 +90,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ block }) => {
         </div>
       ) : (
         <img
+          key={block.content}
           alt={block.title || 'Canvas image'}
           onError={() => setHasError(true)}
           src={block.content}

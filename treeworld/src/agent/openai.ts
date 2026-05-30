@@ -1,6 +1,6 @@
 import OpenAI from 'openai'
 import { recordAgentIoLog } from './ioLog'
-import { EXECUTION_SYSTEM_PROMPT, PLAN_SYSTEM_PROMPT, SYSTEM_PROMPT } from './prompt'
+import { buildPlanUserContent, EXECUTION_SYSTEM_PROMPT, PLAN_SYSTEM_PROMPT } from './prompt'
 import { parseAgentPlan, parseAgentResponse } from './response'
 import type { AgentPlan, AgentResponse, AgentSettings } from './types'
 
@@ -31,7 +31,7 @@ export async function askOpenAIAgent(
       messages: [
         {
           role: 'system',
-          content: SYSTEM_PROMPT,
+          content: EXECUTION_SYSTEM_PROMPT,
         },
         {
           role: 'user',
@@ -78,16 +78,6 @@ export async function askOpenAIAgent(
 
     throw error
   }
-}
-
-function buildPlanUserContent(userInput: string, canvasContext: string, currentPlan?: AgentPlan): string {
-  return [
-    `Canvas context:\n${canvasContext}`,
-    currentPlan ? `Current plan to revise:\n${JSON.stringify(currentPlan, null, 2)}` : '',
-    `User request:\n${userInput}`,
-  ]
-    .filter(Boolean)
-    .join('\n\n')
 }
 
 async function requestOpenAIText(systemPrompt: string, userContent: string, settings: AgentSettings): Promise<string> {

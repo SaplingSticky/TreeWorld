@@ -1,5 +1,5 @@
 const SHARED_CANVAS_RULES = `
-Supported block types: markdown, note, bubble, image, collection, html, svg, code, table, link.
+Supported block types: markdown, note, bubble, image, collection, html, svg, code, table, link, canvas2d.
 - Use markdown blocks for documents, explanations, outlines, plans, summaries, and structured content.
 - Use note blocks for reminders, quick tips, warnings, and short memos.
 - Use bubble blocks for brief messages, memos, reminders, and conversational notes that stand out visually.
@@ -11,6 +11,8 @@ Supported block types: markdown, note, bubble, image, collection, html, svg, cod
 - Use svg blocks for static diagrams, flowcharts, architecture maps, concept illustrations, and simple charts.
 - SVG block content must be a complete inline <svg> string with a viewBox, width="100%", height="100%", and no external resources.
 - SVG blocks cannot include scripts, foreignObject, external images, or event handler attributes.
+- Use canvas2d blocks for real-time visualizations, particle effects, animated charts, generative art, and interactive graphics.
+- Canvas2D block content is raw JavaScript. Variables available: canvas (element), ctx (2D context), w (width), h (height), requestAnimationFrame, cancelAnimationFrame. Use requestAnimationFrame for animations.
 - Use code blocks for source code, scripts, config files, and code snippets.
 - Code block content is the raw source code string. Store the language in the block title (e.g. title="javascript", title="python").
 - When Web search context is provided, use it as the factual source of truth.
@@ -109,4 +111,12 @@ ${SHARED_CANVAS_RULES}
 - If Web search context is present, ALWAYS append a "Sources" section at the end of each markdown block that uses search data. Format: "Sources: [Title](URL)". Never invent URLs — only use URLs from the search context.
 `.trim()
 
-export const SYSTEM_PROMPT = EXECUTION_SYSTEM_PROMPT
+export function buildPlanUserContent(userInput: string, canvasContext: string, currentPlan?: { collections: unknown[] }): string {
+  return [
+    `Canvas context:\n${canvasContext}`,
+    currentPlan ? `Current plan to revise:\n${JSON.stringify(currentPlan, null, 2)}` : '',
+    `User request:\n${userInput}`,
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+}

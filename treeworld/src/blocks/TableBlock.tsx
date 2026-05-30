@@ -46,16 +46,21 @@ const TableBlock: React.FC<TableBlockProps> = ({ block }) => {
   const tableData = useMemo(() => parseTableData(block.content), [block.content])
 
   const sortedData = useMemo(() => {
-    if (sortColumn === null) return tableData
-    const sortedRows = [...tableData.rows].sort((a, b) => {
-      const va = (a[sortColumn] ?? '').toLowerCase()
-      const vb = (b[sortColumn] ?? '').toLowerCase()
+    if (sortColumn === null) return { ...tableData, originalIndices: tableData.rows.map((_, i) => i) }
+    const indexed = tableData.rows.map((row, i) => ({ row, originalIndex: i }))
+    indexed.sort((a, b) => {
+      const va = (a.row[sortColumn] ?? '').toLowerCase()
+      const vb = (b.row[sortColumn] ?? '').toLowerCase()
       const numA = Number(va)
       const numB = Number(vb)
       if (!isNaN(numA) && !isNaN(numB)) return sortAsc ? numA - numB : numB - numA
       return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va)
     })
-    return { ...tableData, rows: sortedRows }
+    return {
+      headers: tableData.headers,
+      rows: indexed.map((entry) => entry.row),
+      originalIndices: indexed.map((entry) => entry.originalIndex),
+    }
   }, [tableData, sortColumn, sortAsc])
 
   const saveData = useCallback(
@@ -72,12 +77,10 @@ const TableBlock: React.FC<TableBlockProps> = ({ block }) => {
   const handleCellBlur = () => {
     if (editingCell && !block.locked) {
       const newData = { ...tableData }
-      const originalRowIndex = tableData.rows.indexOf(sortedData.rows[editingCell.row])
-      if (originalRowIndex >= 0) {
-        newData.rows = [...newData.rows]
-        newData.rows[originalRowIndex] = [...newData.rows[originalRowIndex]]
-        newData.rows[originalRowIndex][editingCell.col] = editValue
-      }
+      const originalRowIndex = sortedData.originalIndices[editingCell.row]
+      newData.rows = [...newData.rows]
+      newData.rows[originalRowIndex] = [...newData.rows[originalRowIndex]]
+      newData.rows[originalRowIndex][editingCell.col] = editValue
       saveData(newData)
     }
     setEditingCell(null)
@@ -157,6 +160,7 @@ const TableBlock: React.FC<TableBlockProps> = ({ block }) => {
               {sortedData.headers.map((header, colIndex) => (
                 <th
                   key={colIndex}
+                  aria-sort={sortColumn === colIndex ? (sortAsc ? 'ascending' : 'descending') : 'none'}
                   onClick={() => handleSort(colIndex)}
                   onMouseDown={(e) => e.stopPropagation()}
                   onDoubleClick={(e) => e.stopPropagation()}

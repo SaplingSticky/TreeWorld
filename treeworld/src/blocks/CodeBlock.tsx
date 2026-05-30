@@ -1,51 +1,49 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import hljs from 'highlight.js/lib/core'
-import javascript from 'highlight.js/lib/languages/javascript'
-import typescript from 'highlight.js/lib/languages/typescript'
-import python from 'highlight.js/lib/languages/python'
-import css from 'highlight.js/lib/languages/css'
-import htmlLang from 'highlight.js/lib/languages/xml'
-import json from 'highlight.js/lib/languages/json'
-import bash from 'highlight.js/lib/languages/bash'
-import sql from 'highlight.js/lib/languages/sql'
-import rust from 'highlight.js/lib/languages/rust'
-import go from 'highlight.js/lib/languages/go'
-import java from 'highlight.js/lib/languages/java'
-import cpp from 'highlight.js/lib/languages/cpp'
-import csharp from 'highlight.js/lib/languages/csharp'
-import yaml from 'highlight.js/lib/languages/yaml'
-import markdown from 'highlight.js/lib/languages/markdown'
 import type { Block } from '../store'
 import { useCanvasStore } from '../store'
 import BlockMenu from './BlockMenu'
 import ResizeHandle from './ResizeHandle'
 import { useBlockInteractions } from './useBlockInteractions'
 
-hljs.registerLanguage('javascript', javascript)
-hljs.registerLanguage('js', javascript)
-hljs.registerLanguage('typescript', typescript)
-hljs.registerLanguage('ts', typescript)
-hljs.registerLanguage('python', python)
-hljs.registerLanguage('py', python)
-hljs.registerLanguage('css', css)
-hljs.registerLanguage('html', htmlLang)
-hljs.registerLanguage('xml', htmlLang)
-hljs.registerLanguage('json', json)
-hljs.registerLanguage('bash', bash)
-hljs.registerLanguage('sh', bash)
-hljs.registerLanguage('shell', bash)
-hljs.registerLanguage('sql', sql)
-hljs.registerLanguage('rust', rust)
-hljs.registerLanguage('go', go)
-hljs.registerLanguage('java', java)
-hljs.registerLanguage('cpp', cpp)
-hljs.registerLanguage('c', cpp)
-hljs.registerLanguage('csharp', csharp)
-hljs.registerLanguage('cs', csharp)
-hljs.registerLanguage('yaml', yaml)
-hljs.registerLanguage('yml', yaml)
-hljs.registerLanguage('markdown', markdown)
-hljs.registerLanguage('md', markdown)
+// Lazy-loaded language registry
+const LANGUAGE_LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
+  javascript: () => import('highlight.js/lib/languages/javascript'),
+  js: () => import('highlight.js/lib/languages/javascript'),
+  typescript: () => import('highlight.js/lib/languages/typescript'),
+  ts: () => import('highlight.js/lib/languages/typescript'),
+  python: () => import('highlight.js/lib/languages/python'),
+  py: () => import('highlight.js/lib/languages/python'),
+  css: () => import('highlight.js/lib/languages/css'),
+  html: () => import('highlight.js/lib/languages/xml'),
+  xml: () => import('highlight.js/lib/languages/xml'),
+  json: () => import('highlight.js/lib/languages/json'),
+  bash: () => import('highlight.js/lib/languages/bash'),
+  sh: () => import('highlight.js/lib/languages/bash'),
+  shell: () => import('highlight.js/lib/languages/bash'),
+  sql: () => import('highlight.js/lib/languages/sql'),
+  rust: () => import('highlight.js/lib/languages/rust'),
+  go: () => import('highlight.js/lib/languages/go'),
+  java: () => import('highlight.js/lib/languages/java'),
+  cpp: () => import('highlight.js/lib/languages/cpp'),
+  c: () => import('highlight.js/lib/languages/cpp'),
+  csharp: () => import('highlight.js/lib/languages/csharp'),
+  cs: () => import('highlight.js/lib/languages/csharp'),
+  yaml: () => import('highlight.js/lib/languages/yaml'),
+  yml: () => import('highlight.js/lib/languages/yaml'),
+  markdown: () => import('highlight.js/lib/languages/markdown'),
+  md: () => import('highlight.js/lib/languages/markdown'),
+}
+
+const loadedLanguages = new Set<string>()
+
+async function ensureLanguage(lang: string): Promise<void> {
+  if (loadedLanguages.has(lang) || !LANGUAGE_LOADERS[lang]) return
+  const mod = await LANGUAGE_LOADERS[lang]()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  hljs.registerLanguage(lang, mod.default as any)
+  loadedLanguages.add(lang)
+}
 
 interface CodeBlockProps {
   block: Block
@@ -80,9 +78,18 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ block }) => {
     return 'auto'
   })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const copyTimerRef = useRef<number | undefined>(undefined)
 
-  const detectedLanguage = language === 'auto' ? detectLanguage(block.content) : language
-  const highlighted = highlightCode(block.content, language)
+  useEffect(() => () => { if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current) }, [])
+
+  // Lazy-load language on demand
+  useEffect(() => {
+    const lang = language === 'auto' ? detectLanguage(block.content) : language
+    if (lang && lang !== 'plaintext') ensureLanguage(lang)
+  }, [language, block.content])
+
+  const detectedLanguage = useMemo(() => language === 'auto' ? detectLanguage(block.content) : language, [language, block.content])
+  const highlighted = useMemo(() => highlightCode(block.content, language), [block.content, language])
 
   useEffect(() => {
     if (isEditing) textareaRef.current?.focus()
@@ -105,8 +112,8 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ block }) => {
     e.stopPropagation()
     navigator.clipboard.writeText(block.content).then(() => {
       setCopied(true)
-      window.setTimeout(() => setCopied(false), 1500)
-    })
+      copyTimerRef.current = window.setTimeout(() => setCopied(false), 1500)
+    }).catch(() => { /* clipboard permission denied or non-secure context */ })
   }
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

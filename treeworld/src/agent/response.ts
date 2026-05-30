@@ -28,7 +28,7 @@ function isValidCommand(command: unknown): command is CanvasCommand {
   if (maybeCommand.type === 'canvas.create') {
     return (
       !!maybeCommand.block &&
-      ['markdown', 'note', 'image', 'collection', 'html', 'svg', 'code', 'table', 'link'].includes(maybeCommand.block.type) &&
+      ['markdown', 'note', 'image', 'collection', 'html', 'svg', 'code', 'table', 'link', 'canvas2d'].includes(maybeCommand.block.type) &&
       typeof maybeCommand.block.title === 'string' &&
       typeof maybeCommand.block.content === 'string'
     )
@@ -62,7 +62,7 @@ function isValidPlanBlock(block: unknown): block is AgentPlanBlock {
   const maybeBlock = block as AgentPlanBlock
 
   return (
-    ['markdown', 'note', 'image', 'collection', 'html', 'svg', 'code', 'table', 'link'].includes(maybeBlock.type) &&
+    ['markdown', 'note', 'image', 'collection', 'html', 'svg', 'code', 'table', 'link', 'canvas2d'].includes(maybeBlock.type) &&
     typeof maybeBlock.title === 'string' &&
     typeof maybeBlock.reason === 'string'
   )

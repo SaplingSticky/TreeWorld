@@ -20,6 +20,7 @@ const ResizeHandle: React.FC<ResizeHandleProps> = ({
 }) => (
   <div
     aria-label={`Resize ${block.type} block`}
+    role="separator"
     title="Resize"
     onMouseDown={onMouseDown}
     onDoubleClick={(e) => e.stopPropagation()}

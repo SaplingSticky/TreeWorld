@@ -311,27 +311,69 @@ export function executeCommands(response: AgentResponse, store: CanvasCommandSto
   })
 }
 
-export function buildCanvasContext(blocks: Record<string, Block>): string {
+const MAX_CONTEXT_CHARS = 4000
+const MAX_CONTEXT_BLOCKS = 30
+
+export function buildCanvasContext(blocks: Record<string, Block>, camera?: Camera): string {
   const blockList = Object.values(blocks)
 
   if (blockList.length === 0) {
     return 'The canvas is currently empty.'
   }
 
-  return blockList
-    .map((block) => {
-      const contentPreview = block.content.replace(/\s+/g, ' ').slice(0, 120)
+  // Filter to viewport blocks if camera is provided
+  let visibleBlocks = blockList
+  if (camera) {
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1920
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 1080
+    const left = -camera.x / camera.zoom - 200
+    const top = -camera.y / camera.zoom - 200
+    const right = (vw - camera.x) / camera.zoom + 200
+    const bottom = (vh - camera.y) / camera.zoom + 200
 
-      return [
-        `id=${block.id}`,
-        `type=${block.type}`,
-        `title=${block.title || 'Untitled'}`,
-        `position=(${Math.round(block.x)}, ${Math.round(block.y)})`,
-        `size=${Math.round(block.width)}x${Math.round(block.height)}`,
-        `locked=${block.locked}`,
-        `parentCollectionId=${block.parentCollectionId || 'none'}`,
-        `content=${contentPreview || '(empty)'}`,
-      ].join('; ')
-    })
-    .join('\n')
+    visibleBlocks = blockList.filter(
+      (b) => b.x + b.width > left && b.x < right && b.y + b.height > top && b.y < bottom
+    )
+
+    // Always include collection blocks
+    const collections = blockList.filter((b) => b.type === 'collection')
+    visibleBlocks = [...new Map([...visibleBlocks, ...collections].map((b) => [b.id, b])).values()]
+  }
+
+  // Cap at MAX_CONTEXT_BLOCKS
+  const capped = visibleBlocks.length > MAX_CONTEXT_BLOCKS
+  const blocksToProcess = capped ? visibleBlocks.slice(0, MAX_CONTEXT_BLOCKS) : visibleBlocks
+
+  const lines: string[] = []
+  let totalChars = 0
+
+  if (capped || (camera && visibleBlocks.length < blockList.length)) {
+    const summary = `Showing ${blocksToProcess.length} of ${blockList.length} blocks${camera ? ' (viewport + collections)' : ''}.`
+    lines.push(summary)
+    totalChars += summary.length + 1
+  }
+
+  for (const block of blocksToProcess) {
+    const contentPreview = block.content.replace(/\s+/g, ' ').slice(0, 80)
+    const line = [
+      `id=${block.id}`,
+      `type=${block.type}`,
+      `title=${block.title || 'Untitled'}`,
+      `position=(${Math.round(block.x)}, ${Math.round(block.y)})`,
+      `size=${Math.round(block.width)}x${Math.round(block.height)}`,
+      `locked=${block.locked}`,
+      `parentCollectionId=${block.parentCollectionId || 'none'}`,
+      `content=${contentPreview || '(empty)'}`,
+    ].join('; ')
+
+    if (totalChars + line.length + 1 > MAX_CONTEXT_CHARS) {
+      lines.push(`... context truncated (${blocksToProcess.length - lines.length + 1} blocks remaining)`)
+      break
+    }
+
+    lines.push(line)
+    totalChars += line.length + 1
+  }
+
+  return lines.join('\n')
 }

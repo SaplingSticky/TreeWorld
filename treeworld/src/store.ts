@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { AgentProvider, AgentSettings } from './agent/types'
 
-export type BlockType = 'markdown' | 'note' | 'bubble' | 'html' | 'image' | 'collection' | 'svg' | 'code' | 'table' | 'link'
+export type BlockType = 'markdown' | 'note' | 'bubble' | 'html' | 'image' | 'collection' | 'svg' | 'code' | 'table' | 'link' | 'canvas2d'
 export type CanvasTheme = 'cork' | 'leather' | 'linen'
 
 export interface Block {
@@ -96,7 +96,7 @@ const CANVASES_KEY = 'treeworld:canvases'
 const ACTIVE_CANVAS_KEY = 'treeworld:activeCanvasId'
 const CANVAS_THEME_KEY = 'treeworld.canvasTheme'
 const DEFAULT_CAMERA: Camera = { x: 0, y: 0, zoom: 1 }
-const BLOCK_TYPES: BlockType[] = ['markdown', 'note', 'bubble', 'html', 'image', 'collection', 'svg', 'code', 'table', 'link']
+const BLOCK_TYPES: BlockType[] = ['markdown', 'note', 'bubble', 'html', 'image', 'collection', 'svg', 'code', 'table', 'link', 'canvas2d']
 const COLLECTION_PADDING = 24
 const COLLECTION_HEADER_HEIGHT = 42
 const LAYOUT_GAP_X = 36
@@ -126,12 +126,36 @@ function safeJsonParse(value: string | null): unknown {
   }
 }
 
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // QuotaExceededError or SecurityError — silently ignore
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // ignore
+  }
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
 function readCanvasTheme(): CanvasTheme {
-  const theme = localStorage.getItem(CANVAS_THEME_KEY)
+  const theme = safeGetItem(CANVAS_THEME_KEY)
 
   if (theme === 'cork' || theme === 'leather' || theme === 'linen') {
     return theme
@@ -206,7 +230,7 @@ function isCanvasMeta(value: unknown): value is CanvasMeta {
 }
 
 function readCanvasMetas(): CanvasMeta[] {
-  const parsed = safeJsonParse(localStorage.getItem(CANVASES_KEY))
+  const parsed = safeJsonParse(safeGetItem(CANVASES_KEY))
 
   if (!Array.isArray(parsed)) {
     return []
@@ -216,11 +240,11 @@ function readCanvasMetas(): CanvasMeta[] {
 }
 
 function writeCanvasMetas(metas: CanvasMeta[]): void {
-  localStorage.setItem(CANVASES_KEY, JSON.stringify(metas))
+  safeSetItem(CANVASES_KEY, JSON.stringify(metas))
 }
 
 function readCanvasDocument(id: string): CanvasDocument | null {
-  const parsed = safeJsonParse(localStorage.getItem(canvasKey(id)))
+  const parsed = safeJsonParse(safeGetItem(canvasKey(id)))
 
   if (!isRecord(parsed)) {
     return null
@@ -248,7 +272,7 @@ function readCanvasDocument(id: string): CanvasDocument | null {
 }
 
 function writeCanvasDocument(document: CanvasDocument): void {
-  localStorage.setItem(canvasKey(document.id), JSON.stringify(document))
+  safeSetItem(canvasKey(document.id), JSON.stringify(document))
 }
 
 function upsertCanvasMeta(metas: CanvasMeta[], meta: CanvasMeta): CanvasMeta[] {
@@ -278,7 +302,7 @@ function persistCanvasDocument(document: CanvasDocument): CanvasMeta[] {
   writeCanvasDocument(document)
   const metas = upsertCanvasMeta(readCanvasMetas(), createCanvasMeta(document))
   writeCanvasMetas(metas)
-  localStorage.setItem(ACTIVE_CANVAS_KEY, document.id)
+  safeSetItem(ACTIVE_CANVAS_KEY, document.id)
   return metas
 }
 
@@ -325,7 +349,22 @@ function rectanglesOverlap(a: Block, b: Block): boolean {
 }
 
 function hasBlockOverlaps(blocks: Block[]): boolean {
-  return blocks.some((block, index) => blocks.slice(index + 1).some((nextBlock) => rectanglesOverlap(block, nextBlock)))
+  if (blocks.length <= 1) return false
+
+  // Sweep-line optimization: sort by x, only check nearby blocks
+  const sorted = [...blocks].sort((a, b) => a.x - b.x)
+
+  for (let i = 0; i < sorted.length; i++) {
+    const a = sorted[i]
+    for (let j = i + 1; j < sorted.length; j++) {
+      const b = sorted[j]
+      // If b starts past a's right edge + gap, no further blocks can overlap a
+      if (b.x > a.x + a.width + LAYOUT_GAP_X) break
+      if (rectanglesOverlap(a, b)) return true
+    }
+  }
+
+  return false
 }
 
 function arrangeBlocksIntoGrid(blocks: Block[]): Record<string, Pick<Block, 'x' | 'y'>> {
@@ -369,11 +408,11 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   activeCanvasId: null,
   activeCanvasName: '',
   isAgentThinking: false,
-  agentProvider: (localStorage.getItem('treeworld.agentProvider') as AgentProvider | null) ?? 'anthropic',
-  agentApiKey: localStorage.getItem('treeworld.anthropicApiKey') ?? '',
-  agentBaseUrl: localStorage.getItem('treeworld.agentBaseUrl') ?? '',
-  agentModelId: localStorage.getItem('treeworld.agentModelId') ?? 'claude-sonnet-4-20250514',
-  agentSearchApiKey: localStorage.getItem('treeworld.searchApiKey') ?? '',
+  agentProvider: (safeGetItem('treeworld.agentProvider') as AgentProvider | null) ?? 'anthropic',
+  agentApiKey: safeGetItem('treeworld.anthropicApiKey') ?? '',
+  agentBaseUrl: safeGetItem('treeworld.agentBaseUrl') ?? '',
+  agentModelId: safeGetItem('treeworld.agentModelId') ?? 'claude-sonnet-4-20250514',
+  agentSearchApiKey: safeGetItem('treeworld.searchApiKey') ?? '',
   agentStatusText: 'Agent 思考中...',
   canvasTheme: readCanvasTheme(),
   frontBlockId: null,
@@ -402,11 +441,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     scheduleActiveCanvasSave(get)
   },
   deleteBlock: (id) => {
+    const prev = get().blocks
     set((state) => {
       const rest = { ...state.blocks }
       delete rest[id]
 
-      return { blocks: rest }
+      return { blocks: rest, undoStack: [...state.undoStack, prev].slice(-50), redoStack: [] }
     })
     scheduleActiveCanvasSave(get)
   },
@@ -573,6 +613,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       blocks: document.blocks,
       camera: document.camera,
       canvasMetas: metas,
+      undoStack: [],
+      redoStack: [],
     })
 
     return id
@@ -584,13 +626,15 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       return false
     }
 
-    localStorage.setItem(ACTIVE_CANVAS_KEY, id)
+    safeSetItem(ACTIVE_CANVAS_KEY, id)
     set({
       activeCanvasId: id,
       activeCanvasName: document.name,
       blocks: document.blocks,
       camera: document.camera,
       canvasMetas: readCanvasMetas(),
+      undoStack: [],
+      redoStack: [],
     })
 
     return true
@@ -613,6 +657,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       activeCanvasName: '',
       blocks: {},
       camera: DEFAULT_CAMERA,
+      undoStack: [],
+      redoStack: [],
     })
   },
   renameCanvas: (id, name) => {
@@ -638,12 +684,12 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     })
   },
   deleteCanvas: (id) => {
-    localStorage.removeItem(canvasKey(id))
+    safeRemoveItem(canvasKey(id))
     const metas = readCanvasMetas().filter((meta) => meta.id !== id)
     writeCanvasMetas(metas)
 
-    if (localStorage.getItem(ACTIVE_CANVAS_KEY) === id) {
-      localStorage.removeItem(ACTIVE_CANVAS_KEY)
+    if (safeGetItem(ACTIVE_CANVAS_KEY) === id) {
+      safeRemoveItem(ACTIVE_CANVAS_KEY)
     }
 
     if (get().activeCanvasId === id) {
@@ -653,6 +699,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         blocks: {},
         camera: DEFAULT_CAMERA,
         canvasMetas: metas,
+        undoStack: [],
+        redoStack: [],
       })
       return
     }
@@ -691,6 +739,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       blocks: importedDocument.blocks,
       camera: importedDocument.camera,
       canvasMetas: metas,
+      undoStack: [],
+      redoStack: [],
     })
 
     return { ok: true, id: importedDocument.id }
@@ -706,30 +756,30 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       searchApiKey: settings.searchApiKey.trim(),
     }
 
-    localStorage.setItem('treeworld.agentProvider', nextSettings.provider)
+    safeSetItem('treeworld.agentProvider', nextSettings.provider)
 
     if (nextSettings.apiKey) {
-      localStorage.setItem('treeworld.anthropicApiKey', nextSettings.apiKey)
+      safeSetItem('treeworld.anthropicApiKey', nextSettings.apiKey)
     } else {
-      localStorage.removeItem('treeworld.anthropicApiKey')
+      safeRemoveItem('treeworld.anthropicApiKey')
     }
 
     if (nextSettings.baseUrl) {
-      localStorage.setItem('treeworld.agentBaseUrl', nextSettings.baseUrl)
+      safeSetItem('treeworld.agentBaseUrl', nextSettings.baseUrl)
     } else {
-      localStorage.removeItem('treeworld.agentBaseUrl')
+      safeRemoveItem('treeworld.agentBaseUrl')
     }
 
     if (nextSettings.modelId) {
-      localStorage.setItem('treeworld.agentModelId', nextSettings.modelId)
+      safeSetItem('treeworld.agentModelId', nextSettings.modelId)
     } else {
-      localStorage.removeItem('treeworld.agentModelId')
+      safeRemoveItem('treeworld.agentModelId')
     }
 
     if (nextSettings.searchApiKey) {
-      localStorage.setItem('treeworld.searchApiKey', nextSettings.searchApiKey)
+      safeSetItem('treeworld.searchApiKey', nextSettings.searchApiKey)
     } else {
-      localStorage.removeItem('treeworld.searchApiKey')
+      safeRemoveItem('treeworld.searchApiKey')
     }
 
     set({
@@ -741,7 +791,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     })
   },
   setCanvasTheme: (theme) => {
-    localStorage.setItem(CANVAS_THEME_KEY, theme)
+    safeSetItem(CANVAS_THEME_KEY, theme)
     set({ canvasTheme: theme })
   },
   undo: () => {
@@ -790,7 +840,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       width: block.width,
       height: block.height,
       heightMode: block.heightMode,
-      layoutGroupId: block.layoutGroupId,
       content: block.content,
       locked: false,
       parentCollectionId: block.parentCollectionId,

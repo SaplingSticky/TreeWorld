@@ -1,17 +1,19 @@
-import React, { useRef, useEffect, useCallback, useMemo, useState } from 'react'
+import React, { Suspense, lazy, useRef, useEffect, useCallback, useMemo, useState } from 'react'
 import { useCanvasStore } from '../store'
 import type { Block } from '../store'
 import { screenToWorld } from './camera'
-import CollectionBlock from '../blocks/CollectionBlock'
-import HtmlBlock from '../blocks/HtmlBlock'
-import ImageBlock from '../blocks/ImageBlock'
-import MarkdownBlock from '../blocks/MarkdownBlock'
-import NoteBlock from '../blocks/NoteBlock'
-import SvgBlock from '../blocks/SvgBlock'
-import CodeBlock from '../blocks/CodeBlock'
-import TableBlock from '../blocks/TableBlock'
-import LinkBlock from '../blocks/LinkBlock'
-import BubbleBlock from '../blocks/BubbleBlock'
+
+const CollectionBlock = lazy(() => import('../blocks/CollectionBlock'))
+const HtmlBlock = lazy(() => import('../blocks/HtmlBlock'))
+const ImageBlock = lazy(() => import('../blocks/ImageBlock'))
+const MarkdownBlock = lazy(() => import('../blocks/MarkdownBlock'))
+const NoteBlock = lazy(() => import('../blocks/NoteBlock'))
+const SvgBlock = lazy(() => import('../blocks/SvgBlock'))
+const CodeBlock = lazy(() => import('../blocks/CodeBlock'))
+const TableBlock = lazy(() => import('../blocks/TableBlock'))
+const LinkBlock = lazy(() => import('../blocks/LinkBlock'))
+const BubbleBlock = lazy(() => import('../blocks/BubbleBlock'))
+const Canvas2DBlock = lazy(() => import('../blocks/Canvas2DBlock'))
 
 const SCREEN_GRID_SIZE = 32
 const NAV_PADDING = 120
@@ -37,25 +39,27 @@ const Canvas: React.FC = () => {
   const [isPanningUi, setIsPanningUi] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null)
+  const [collapsedCollectionIds, setCollapsedCollectionIds] = useState<Set<string>>(new Set())
   const lastMouse = useRef({ x: 0, y: 0 })
   const blockList = useMemo(() => Object.values(blocks), [blocks])
   const blockBounds = useMemo(() => {
-    if (blockList.length === 0) {
-      return null
-    }
+    if (blockList.length === 0) return null
 
-    const minX = Math.min(...blockList.map((block) => block.x))
-    const minY = Math.min(...blockList.map((block) => block.y))
-    const maxX = Math.max(...blockList.map((block) => block.x + block.width))
-    const maxY = Math.max(...blockList.map((block) => block.y + block.height))
+    const bounds = blockList.reduce(
+      (acc, block) => ({
+        minX: Math.min(acc.minX, block.x),
+        minY: Math.min(acc.minY, block.y),
+        maxX: Math.max(acc.maxX, block.x + block.width),
+        maxY: Math.max(acc.maxY, block.y + block.height),
+      }),
+      { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
+    )
 
     return {
-      minX,
-      minY,
-      maxX,
-      maxY,
-      width: Math.max(1, maxX - minX),
-      height: Math.max(1, maxY - minY),
+      ...bounds,
+      width: Math.max(1, bounds.maxX - bounds.minX),
+      height: Math.max(1, bounds.maxY - bounds.minY),
     }
   }, [blockList])
   const minimapScale = blockBounds
@@ -66,6 +70,7 @@ const Canvas: React.FC = () => {
   const minimapOffsetX = (MINIMAP_WIDTH - minimapContentWidth) / 2
   const minimapOffsetY = (MINIMAP_HEIGHT - minimapContentHeight) / 2
   const searchResults = useMemo(() => {
+    if (!isSearchOpen) return []
     const normalizedQuery = searchQuery.trim().toLowerCase()
 
     if (!normalizedQuery) {
@@ -75,7 +80,7 @@ const Canvas: React.FC = () => {
     return blockList
       .filter((block) => `${block.title}\n${block.content}`.toLowerCase().includes(normalizedQuery))
       .slice(0, 8)
-  }, [blockList, searchQuery])
+  }, [blockList, isSearchOpen, searchQuery])
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -126,6 +131,85 @@ const Canvas: React.FC = () => {
     },
     [camera, setCamera]
   )
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      const files = Array.from(e.dataTransfer.files)
+      const imageFiles = files.filter((f) => f.type.startsWith('image/'))
+      if (imageFiles.length === 0) return
+
+      imageFiles.forEach((file, i) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const dataUrl = reader.result as string
+          const worldX = (e.clientX - camera.x) / camera.zoom + i * 40
+          const worldY = (e.clientY - camera.y) / camera.zoom + i * 40
+          const block: Block = {
+            id: crypto.randomUUID(),
+            type: 'image',
+            x: worldX,
+            y: worldY,
+            width: 300,
+            height: 220,
+            content: dataUrl,
+            locked: false,
+            parentCollectionId: null,
+            title: file.name.replace(/\.[^.]+$/, '') || 'Image',
+            createdBy: 'user',
+            createdAt: Date.now(),
+          }
+          useCanvasStore.getState().addBlock(block)
+        }
+        reader.readAsDataURL(file)
+      })
+    },
+    [camera]
+  )
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+  }, [])
+
+  // Paste image from clipboard
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault()
+          const file = item.getAsFile()
+          if (!file) continue
+          const reader = new FileReader()
+          reader.onload = () => {
+            const dataUrl = reader.result as string
+            const viewportCenter = screenToWorld(window.innerWidth / 2, window.innerHeight / 2, useCanvasStore.getState().camera)
+            const block: Block = {
+              id: crypto.randomUUID(),
+              type: 'image',
+              x: viewportCenter.x - 150,
+              y: viewportCenter.y - 110,
+              width: 300,
+              height: 220,
+              content: dataUrl,
+              locked: false,
+              parentCollectionId: null,
+              title: 'Pasted Image',
+              createdBy: 'user',
+              createdAt: Date.now(),
+            }
+            useCanvasStore.getState().addBlock(block)
+          }
+          reader.readAsDataURL(file)
+          break
+        }
+      }
+    }
+    window.addEventListener('paste', handlePaste)
+    return () => window.removeEventListener('paste', handlePaste)
+  }, [])
 
   const focusBlock = useCallback(
     (block: Block, zoom = Math.max(camera.zoom, 1)) => {
@@ -246,17 +330,25 @@ const Canvas: React.FC = () => {
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (canvas) {
-      canvas.addEventListener('wheel', (e) => e.preventDefault(), {
-        passive: false,
-      })
-    }
+    if (!canvas) return undefined
+    const preventWheel = (e: WheelEvent) => e.preventDefault()
+    canvas.addEventListener('wheel', preventWheel, { passive: false })
+    return () => canvas.removeEventListener('wheel', preventWheel)
+  }, [])
+
+  const toggleCollapse = useCallback((id: string) => {
+    setCollapsedCollectionIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }, [])
 
   const renderBlock = (block: Block) => {
     switch (block.type) {
       case 'collection':
-        return <CollectionBlock key={block.id} block={block} />
+        return <CollectionBlock key={block.id} block={block} onToggleCollapse={toggleCollapse} isCollapsed={collapsedCollectionIds.has(block.id)} />
       case 'image':
         return <ImageBlock key={block.id} block={block} />
       case 'html':
@@ -275,13 +367,19 @@ const Canvas: React.FC = () => {
         return <NoteBlock key={block.id} block={block} />
       case 'bubble':
         return <BubbleBlock key={block.id} block={block} />
+      case 'canvas2d':
+        return <Canvas2DBlock key={block.id} block={block} />
       default:
         return null
     }
   }
   const collectionBlocks = blockList.filter((block) => block.type === 'collection')
-  const contentBlocks = blockList.filter((block) => block.type !== 'collection')
-  const layoutFitSignature = contentBlocks
+  const visibleContentBlocks = blockList.filter((block) => {
+    if (block.type === 'collection') return false
+    if (block.parentCollectionId && collapsedCollectionIds.has(block.parentCollectionId)) return false
+    return true
+  })
+  const layoutFitSignature = visibleContentBlocks
     .filter((block) => block.parentCollectionId || block.layoutGroupId || block.createdBy === 'agent')
     .map((block) =>
       [
@@ -321,6 +419,8 @@ const Canvas: React.FC = () => {
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
       style={{
         position: 'fixed',
         top: 0,
@@ -340,8 +440,33 @@ const Canvas: React.FC = () => {
           transformOrigin: '0 0',
         }}
       >
-        {collectionBlocks.map(renderBlock)}
-        {contentBlocks.map(renderBlock)}
+        <Suspense fallback={null}>
+          {collectionBlocks.map(renderBlock)}
+          {visibleContentBlocks.map(renderBlock)}
+        </Suspense>
+        {highlightedBlockId && (() => {
+          const hb = blocks[highlightedBlockId]
+          if (!hb) return null
+          return (
+            <div
+              aria-hidden
+              className="canvas-search-highlight"
+              style={{
+                position: 'absolute',
+                left: hb.x - 4,
+                top: hb.y - 4,
+                width: hb.width + 8,
+                height: hb.height + 8,
+                borderRadius: '6px',
+                border: '3px solid #3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                pointerEvents: 'none',
+                zIndex: 9998,
+                animation: 'search-highlight-pulse 1.5s ease-out forwards',
+              }}
+            />
+          )
+        })()}
       </div>
       {isAgentThinking && (
         <div
@@ -429,6 +554,8 @@ const Canvas: React.FC = () => {
                   onClick={() => {
                     focusBlock(block)
                     setIsSearchOpen(false)
+                    setHighlightedBlockId(block.id)
+                    window.setTimeout(() => setHighlightedBlockId(null), 1500)
                   }}
                 >
                   <span>{block.title || 'Untitled'}</span>

@@ -171,7 +171,8 @@ const FloatingInput: React.FC = () => {
     settings: AgentSettings,
     existingSearchContext = ''
   ): Promise<{ canvasContext: string; searchContext: string }> => {
-    const baseCanvasContext = buildCanvasContext(useCanvasStore.getState().blocks)
+    const state = useCanvasStore.getState()
+    const baseCanvasContext = buildCanvasContext(state.blocks, state.camera)
 
     if (existingSearchContext) {
       return {
@@ -202,7 +203,8 @@ const FloatingInput: React.FC = () => {
     useCanvasStore.getState().setAgentThinking(true)
 
     try {
-      const baseCanvasContext = buildCanvasContext(useCanvasStore.getState().blocks)
+      const execState = useCanvasStore.getState()
+      const baseCanvasContext = buildCanvasContext(execState.blocks, execState.camera)
       const settings = ensureApiKey(pendingPlan.userInput, baseCanvasContext)
       const canvasContext = pendingPlan.searchContext
         ? `${baseCanvasContext}\n\n${pendingPlan.searchContext}`
@@ -242,7 +244,8 @@ const FloatingInput: React.FC = () => {
     useCanvasStore.getState().setAgentThinking(true)
 
     try {
-      const baseCanvasContext = buildCanvasContext(useCanvasStore.getState().blocks)
+      const submitState = useCanvasStore.getState()
+      const baseCanvasContext = buildCanvasContext(submitState.blocks, submitState.camera)
       const settings = ensureApiKey(prompt, baseCanvasContext)
       const { canvasContext, searchContext } = await buildContextWithSearch(prompt, settings, pendingPlan?.searchContext)
       useCanvasStore.getState().setAgentStatusText('Agent 正在规划...')

@@ -35,25 +35,35 @@ export async function searchWeb(userInput: string, apiKey: string): Promise<Sear
     return null
   }
 
-  const response = await fetch('https://api.tavily.com/search', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      api_key: trimmedApiKey,
-      query: userInput,
-      search_depth: 'basic',
-      include_answer: true,
-      max_results: 5,
-    }),
-  })
+  let response: Response
+  try {
+    response = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        api_key: trimmedApiKey,
+        query: userInput,
+        search_depth: 'basic',
+        include_answer: true,
+        max_results: 5,
+      }),
+    })
+  } catch {
+    throw new Error('搜索失败：网络错误，请检查网络连接。')
+  }
 
   if (!response.ok) {
     throw new Error(`搜索失败：Tavily 返回 ${response.status}。`)
   }
 
-  const data = (await response.json()) as TavilyResponse
+  let data: TavilyResponse
+  try {
+    data = (await response.json()) as TavilyResponse
+  } catch {
+    throw new Error('搜索失败：Tavily 返回了无效的响应格式。')
+  }
   const results = (data.results ?? [])
     .filter((result) => result.title && result.url)
     .slice(0, 5)
