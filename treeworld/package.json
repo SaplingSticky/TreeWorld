@@ -1,7 +1,9 @@
 {
   "name": "treeworld",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "AI-powered infinite canvas — a shared creative space for humans and AI",
+  "author": "CrazyLoveStudio",
   "type": "module",
   "scripts": {
     "dev": "vite",
