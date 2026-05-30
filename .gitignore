@@ -34,3 +34,10 @@ treeworld/output/
 
 # Claude Code local
 .claude/
+
+# Internal docs
+documents/
+treeworld/brand-spec.md
+treeworld/test-markdown.md
+treeworld/mp78lhde-TreeWorld-Roadmap.md
+treeworld/README.md
