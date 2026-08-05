@@ -11,7 +11,7 @@ TreeWorld 是一块无限大的桌面。你可以在上面随意铺开笔记、�
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript)
-![Electron](https://img.shields.io/badge/Electron-42-47848F?logo=electron)
+![Tauri](https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
@@ -73,9 +73,11 @@ VITE_TAVILY_API_KEY=你的key    # 启用联网搜索
 ### 桌面版开发
 
 ```bash
-npm run electron:dev          # 开发模式
-npm run electron:build:win    # 打包 Windows 安装包
+npm run tauri:dev           # 开发模式（系统 WebView）
+npm run tauri:build         # 打包 AppImage + deb
 ```
+
+桌面壳是 [Tauri v2](https://tauri.app)（Rust + 系统 WebView，安装包仅 ~3.5MB，内存约为 Electron 一半），不再是 Electron。
 
 ---
 
@@ -96,7 +98,7 @@ npm run electron:build:win    # 打包 Windows 安装包
 
 ## 技术栈
 
-React 19 · TypeScript · Vite · Zustand · Anthropic SDK · OpenAI SDK · Tavily · highlight.js · react-markdown · Electron
+React 19 · TypeScript · Vite · Zustand · Anthropic SDK · OpenAI SDK · Tavily · highlight.js · react-markdown · Tauri 2
 
 ---
 

@@ -9,7 +9,7 @@ No flowchart templates. No document frameworks. Open TreeWorld, describe what yo
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript)
-![Electron](https://img.shields.io/badge/Electron-42-47848F?logo=electron)
+![Tauri](https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
@@ -71,9 +71,11 @@ VITE_TAVILY_API_KEY=your-key    # enables web search
 ### Desktop development
 
 ```bash
-npm run electron:dev          # dev mode
-npm run electron:build:win    # build Windows installer
+npm run tauri:dev           # dev mode (system WebView)
+npm run tauri:build         # build AppImage + deb
 ```
+
+The desktop shell is [Tauri v2](https://tauri.app) (Rust + system WebView, ~3.5MB package, roughly half the memory of Electron) — no more Electron.
 
 ---
 
@@ -94,7 +96,7 @@ npm run electron:build:win    # build Windows installer
 
 ## Tech stack
 
-React 19 · TypeScript · Vite · Zustand · Anthropic SDK · OpenAI SDK · Tavily · highlight.js · react-markdown · Electron
+React 19 · TypeScript · Vite · Zustand · Anthropic SDK · OpenAI SDK · Tavily · highlight.js · react-markdown · Tauri 2
 
 ---
 
