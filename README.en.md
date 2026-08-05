@@ -32,6 +32,8 @@ It doesn't dump blocks onto your canvas blindly. The agent presents a **plan** f
 
 The agent can **search the web**. When your question involves recent information, technical docs, or market data, it searches automatically, weaves the results into its answer, and cites sources.
 
+The agent doesn't just add content — it can move, resize, lock, and delete blocks. When a long block's content is truncated in its context, it **queries the full content first** before acting on it, instead of guessing. Generated content is auto-arranged into empty space near your viewport, never on top of what you already have.
+
 Choose between three AI backends: Anthropic's Claude, OpenAI's GPT models, or local models via Ollama. Lock any block to prevent the agent from modifying it — you always have the final say.
 
 ### The look and feel
