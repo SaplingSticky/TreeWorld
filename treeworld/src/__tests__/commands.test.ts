@@ -225,3 +225,71 @@ describe('formatQueryResults', () => {
     expect(result).toContain('NOT FOUND')
   })
 })
+
+describe('executeCommands — placement collision avoidance', () => {
+  it('should shift created blocks down when the viewport center is occupied', () => {
+    // Occupies the viewport center (jsdom default 1024x768 → center 512,384)
+    const existing = makeBlock({ id: 'existing', x: 400, y: 300, width: 300, height: 250 })
+    const store = makeStore({ existing })
+
+    executeCommands(
+      makeResponse([
+        {
+          type: 'canvas.create',
+          block: { type: 'note', title: 'A', content: 'a' },
+        },
+        {
+          type: 'canvas.create',
+          block: { type: 'note', title: 'B', content: 'b' },
+        },
+      ]),
+      store
+    )
+
+    const created = Object.values(store.blocks).filter((b) => b.id !== 'existing')
+    expect(created.length).toBe(2)
+
+    for (const block of created) {
+      const overlaps =
+        block.x + block.width > existing.x &&
+        existing.x + existing.width > block.x &&
+        block.y + block.height > existing.y &&
+        existing.y + existing.height > block.y
+      expect(overlaps).toBe(false)
+    }
+  })
+
+  it('should keep blocks inside their own collection (same layout group)', () => {
+    const store = makeStore({})
+
+    executeCommands(
+      makeResponse([
+        {
+          type: 'canvas.create',
+          block: { type: 'collection', id: 'col', title: 'C', content: '' },
+        },
+        {
+          type: 'canvas.create',
+          block: { type: 'note', id: 'child1', title: 'A', content: 'a' },
+        },
+        {
+          type: 'canvas.create',
+          block: { type: 'note', id: 'child2', title: 'B', content: 'b' },
+        },
+        { type: 'canvas.group', collectionId: 'col', blockIds: ['child1', 'child2'] },
+      ]),
+      store
+    )
+
+    // The collision check must not push children out of their collection:
+    // children should stay within the collection bounds.
+    const collection = store.blocks.col
+    for (const childId of ['child1', 'child2']) {
+      const child = store.blocks[childId]
+      expect(child.x).toBeGreaterThanOrEqual(collection.x)
+      expect(child.y).toBeGreaterThanOrEqual(collection.y)
+      expect(child.x + child.width).toBeLessThanOrEqual(collection.x + collection.width)
+      expect(child.y + child.height).toBeLessThanOrEqual(collection.y + collection.height)
+    }
+  })
+})

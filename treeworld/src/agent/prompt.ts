@@ -33,7 +33,7 @@ Plan schema:
       "title": "Collection title",
       "blocks": [
         {
-          "type": "markdown" | "note" | "bubble" | "image" | "collection" | "html" | "svg" | "code" | "table" | "link",
+          "type": "markdown" | "note" | "bubble" | "image" | "collection" | "html" | "svg" | "code" | "table" | "link" | "canvas2d",
           "title": "Block title",
           "reason": "Why this block type fits this content."
         }
@@ -65,7 +65,7 @@ Response schema:
       "type": "canvas.create",
       "block": {
         "id": "optional-stable-id-for-this-response",
-        "type": "markdown" | "note" | "bubble" | "image" | "collection" | "html" | "svg" | "code" | "table" | "link",
+        "type": "markdown" | "note" | "bubble" | "image" | "collection" | "html" | "svg" | "code" | "table" | "link" | "canvas2d",
         "title": "Short block title",
         "content": "Block content. Markdown is allowed for markdown blocks. Image blocks store an image URL in content. Collection blocks can use empty content. HTML blocks store a complete HTML document string. SVG blocks store a complete inline SVG string.",
         "x": number,
@@ -111,8 +111,7 @@ ${SHARED_CANVAS_RULES}
 - Use link blocks for URLs and web references.
 - Link block content must be a JSON string with format: { url: string, title?: string, description?: string, image?: string }
 - Default link size: width 340, height 200.
-- Start placement near x=100, y=100 when no better position is implied.
-- For multiple blocks, offset each block by 40 pixels on x and y.
+- Do not rely on x/y coordinates in canvas.create: the engine auto-arranges created blocks into a tidy 2-column grid near the viewport center and shifts the whole grid down to avoid overlapping existing blocks. Coordinates are optional hints and may be adjusted.
 - For complex tasks, create a collection first, then create child blocks with ids, then group them into the collection.
 - Use ids such as "research-collection", "research-summary", and "research-actions" only within the current response.
 - If canvas context says a block is locked, do not update, move, resize, group, or delete that locked block. Create a note explaining that it must be unlocked first.

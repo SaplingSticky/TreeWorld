@@ -136,6 +136,7 @@ function layoutCreatedBlocks(blockIds: string[], store: CanvasCommandStore): voi
     return [...positions, positions[index - 1] + columnWidths[index - 1] + GRID_GAP_X]
   }, [])
   const rowY: number[] = []
+  const positions = new Map<string, { x: number; y: number }>()
 
   blocks.forEach((block, index) => {
     const row = Math.floor(index / GRID_COLUMNS)
@@ -143,14 +144,54 @@ function layoutCreatedBlocks(blockIds: string[], store: CanvasCommandStore): voi
     const x = columnX[column]
     const y = rowY[row] ?? minY
 
-    guardedUpdate(block.id, { x, y }, store)
-
+    positions.set(block.id, { x, y })
     rowY[row] = Math.max(rowY[row] ?? minY, y)
-
-    const nextRow = row + 1
-    const nextRowY = y + block.height + GRID_GAP_Y
-    rowY[nextRow] = Math.max(rowY[nextRow] ?? minY, nextRowY)
+    rowY[row + 1] = Math.max(rowY[row + 1] ?? minY, y + block.height + GRID_GAP_Y)
   })
+
+  // Collision avoidance: shift the whole grid down until it no longer
+  // overlaps blocks outside this layout group (existing user content or
+  // older agent output). Collections created in the same batch share the
+  // layoutGroupId and are excluded so children stay inside their collection.
+  const groupId = blocks[0]?.layoutGroupId
+  const others = Object.values(store.blocks).filter((block) => block.layoutGroupId !== groupId)
+  const PADDING = 24
+  let shiftY = 0
+
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const collides = others.some((other) =>
+      blocks.some((block) => {
+        const position = positions.get(block.id)
+
+        if (!position) {
+          return false
+        }
+
+        return !(
+          position.x + block.width + PADDING <= other.x ||
+          other.x + other.width + PADDING <= position.x ||
+          position.y + shiftY + block.height + PADDING <= other.y ||
+          other.y + other.height + PADDING <= position.y + shiftY
+        )
+      })
+    )
+
+    if (!collides) {
+      break
+    }
+
+    shiftY += 80
+  }
+
+  for (const block of blocks) {
+    const position = positions.get(block.id)
+
+    if (!position) {
+      continue
+    }
+
+    guardedUpdate(block.id, { x: position.x, y: position.y + shiftY }, store)
+  }
 }
 
 function createLockWarning(block: Block): Block {
