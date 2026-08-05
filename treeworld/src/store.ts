@@ -411,7 +411,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   agentProvider: (safeGetItem('treeworld.agentProvider') as AgentProvider | null) ?? 'anthropic',
   agentApiKey: safeGetItem('treeworld.anthropicApiKey') ?? '',
   agentBaseUrl: safeGetItem('treeworld.agentBaseUrl') ?? '',
-  agentModelId: safeGetItem('treeworld.agentModelId') ?? 'claude-sonnet-4-20250514',
+  agentModelId: safeGetItem('treeworld.agentModelId') ?? 'claude-sonnet-4-5',
   agentSearchApiKey: safeGetItem('treeworld.searchApiKey') ?? '',
   agentStatusText: 'Agent 思考中...',
   canvasTheme: readCanvasTheme(),

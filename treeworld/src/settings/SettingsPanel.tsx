@@ -12,9 +12,9 @@ interface SettingsPanelProps {
 type SettingsTab = 'api' | 'canvas' | 'shortcuts' | 'logs'
 
 const DEFAULT_MODELS: Record<AgentProvider, string> = {
-  anthropic: 'claude-sonnet-4-20250514',
+  anthropic: 'claude-sonnet-4-5',
   openai: 'gpt-4.1-mini',
-  ollama: 'llama3',
+  ollama: 'llama3.1',
 }
 
 const THEME_LABELS: Record<CanvasTheme, string> = {

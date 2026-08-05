@@ -2,7 +2,62 @@ import Anthropic from '@anthropic-ai/sdk'
 import { recordAgentIoLog } from './ioLog'
 import { buildPlanUserContent, EXECUTION_SYSTEM_PROMPT, PLAN_SYSTEM_PROMPT } from './prompt'
 import { parseAgentPlan, parseAgentResponse } from './response'
+import { isAbortError, withAbortTimeout } from './timeout'
 import type { AgentPlan, AgentResponse, AgentSettings } from './types'
+
+const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-5'
+
+async function requestAnthropicText(
+  systemPrompt: string,
+  userContent: string,
+  settings: AgentSettings,
+  maxTokens = 2400
+): Promise<string> {
+  const { signal, clear } = withAbortTimeout()
+
+  try {
+    const anthropic = new Anthropic({
+      apiKey: settings.apiKey,
+      baseURL: settings.baseUrl || undefined,
+      dangerouslyAllowBrowser: true,
+    })
+
+    const response = await anthropic.messages.create(
+      {
+        model: settings.modelId || DEFAULT_ANTHROPIC_MODEL,
+        max_tokens: maxTokens,
+        temperature: 0.2,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: userContent,
+          },
+        ],
+      },
+      { signal }
+    )
+
+    const text = response.content
+      .filter((part) => part.type === 'text')
+      .map((part) => part.text)
+      .join('\n')
+
+    if (!text) {
+      throw new Error('Anthropic 返回了空响应（无文本内容）。请重试。')
+    }
+
+    return text
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new Error('请求超时（60 秒），请重试或检查网络连接。', { cause: error })
+    }
+
+    throw error
+  } finally {
+    clear()
+  }
+}
 
 export async function askAnthropicAgent(
   userInput: string,
@@ -17,36 +72,18 @@ export async function askAnthropicAgent(
   }
 
   try {
-    const anthropic = new Anthropic({
-      apiKey: settings.apiKey,
-      baseURL: settings.baseUrl || undefined,
-      dangerouslyAllowBrowser: true,
-    })
-
-    const response = await anthropic.messages.create({
-      model: settings.modelId || 'claude-sonnet-4-20250514',
-      max_tokens: 1600,
-      temperature: 0.2,
-      system: EXECUTION_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: `Canvas context:\n${canvasContext}\n\nUser request:\n${userInput}`,
-        },
-      ],
-    })
-
-    rawOutput = response.content
-      .filter((part) => part.type === 'text')
-      .map((part) => part.text)
-      .join('\n')
-
+    rawOutput = await requestAnthropicText(
+      EXECUTION_SYSTEM_PROMPT,
+      `Canvas context:\n${canvasContext}\n\nUser request:\n${userInput}`,
+      settings,
+      1600
+    )
     const parsedResponse = parseAgentResponse(rawOutput)
 
     recordAgentIoLog({
       status: 'success',
       provider: settings.provider,
-      modelId: settings.modelId || 'claude-sonnet-4-20250514',
+      modelId: settings.modelId || DEFAULT_ANTHROPIC_MODEL,
       baseUrl: settings.baseUrl,
       hasApiKey: Boolean(settings.apiKey),
       userInput,
@@ -61,7 +98,7 @@ export async function askAnthropicAgent(
     recordAgentIoLog({
       status: 'error',
       provider: settings.provider,
-      modelId: settings.modelId || 'claude-sonnet-4-20250514',
+      modelId: settings.modelId || DEFAULT_ANTHROPIC_MODEL,
       baseUrl: settings.baseUrl,
       hasApiKey: Boolean(settings.apiKey),
       userInput,
@@ -73,38 +110,6 @@ export async function askAnthropicAgent(
 
     throw error
   }
-}
-
-async function requestAnthropicText(systemPrompt: string, userContent: string, settings: AgentSettings): Promise<string> {
-  const anthropic = new Anthropic({
-    apiKey: settings.apiKey,
-    baseURL: settings.baseUrl || undefined,
-    dangerouslyAllowBrowser: true,
-  })
-
-  const response = await anthropic.messages.create({
-    model: settings.modelId || 'claude-sonnet-4-20250514',
-    max_tokens: 2400,
-    temperature: 0.2,
-    system: systemPrompt,
-    messages: [
-      {
-        role: 'user',
-        content: userContent,
-      },
-    ],
-  })
-
-  const text = response.content
-    .filter((part) => part.type === 'text')
-    .map((part) => part.text)
-    .join('\n')
-
-  if (!text) {
-    throw new Error('Anthropic 返回了空响应（无文本内容）。请重试。')
-  }
-
-  return text
 }
 
 export async function askAnthropicPlan(
@@ -127,7 +132,7 @@ export async function askAnthropicPlan(
     recordAgentIoLog({
       status: 'success',
       provider: settings.provider,
-      modelId: settings.modelId || 'claude-sonnet-4-20250514',
+      modelId: settings.modelId || DEFAULT_ANTHROPIC_MODEL,
       baseUrl: settings.baseUrl,
       hasApiKey: Boolean(settings.apiKey),
       userInput,
@@ -142,7 +147,7 @@ export async function askAnthropicPlan(
     recordAgentIoLog({
       status: 'error',
       provider: settings.provider,
-      modelId: settings.modelId || 'claude-sonnet-4-20250514',
+      modelId: settings.modelId || DEFAULT_ANTHROPIC_MODEL,
       baseUrl: settings.baseUrl,
       hasApiKey: Boolean(settings.apiKey),
       userInput,
@@ -180,7 +185,7 @@ export async function executeAnthropicPlan(
     recordAgentIoLog({
       status: 'success',
       provider: settings.provider,
-      modelId: settings.modelId || 'claude-sonnet-4-20250514',
+      modelId: settings.modelId || DEFAULT_ANTHROPIC_MODEL,
       baseUrl: settings.baseUrl,
       hasApiKey: Boolean(settings.apiKey),
       userInput,
@@ -195,7 +200,7 @@ export async function executeAnthropicPlan(
     recordAgentIoLog({
       status: 'error',
       provider: settings.provider,
-      modelId: settings.modelId || 'claude-sonnet-4-20250514',
+      modelId: settings.modelId || DEFAULT_ANTHROPIC_MODEL,
       baseUrl: settings.baseUrl,
       hasApiKey: Boolean(settings.apiKey),
       userInput,
