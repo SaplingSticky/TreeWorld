@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { buildCanvasContext, executeCommands } from '../agent/commands'
+import { buildCanvasContext, executeCommands, formatQueryResults } from '../agent/commands'
 import { recordAgentIoLog } from '../agent/ioLog'
 import { askAgentPlan, executeAgentPlan } from '../agent/provider'
 import { formatSearchContext, searchWeb } from '../agent/search'
@@ -9,6 +9,7 @@ import type { AgentPlan, AgentSettings } from '../agent/types'
 type ChatRole = 'user' | 'ai'
 const CHAT_FADE_DELAY_MS = 4200
 const CHAT_HIDE_DELAY_MS = 5600
+const MAX_QUERY_ROUNDS = 3
 
 type ChatMessage =
   | {
@@ -206,14 +207,30 @@ const FloatingInput: React.FC = () => {
       const execState = useCanvasStore.getState()
       const baseCanvasContext = buildCanvasContext(execState.blocks, execState.camera)
       const settings = ensureApiKey(pendingPlan.userInput, baseCanvasContext)
-      const canvasContext = pendingPlan.searchContext
+      let canvasContext = pendingPlan.searchContext
         ? `${baseCanvasContext}\n\n${pendingPlan.searchContext}`
         : baseCanvasContext
       useCanvasStore.getState().setAgentStatusText('Agent 正在生成画布...')
-      const response = await executeAgentPlan(pendingPlan.userInput, canvasContext, settings, pendingPlan.plan)
+      let response = await executeAgentPlan(pendingPlan.userInput, canvasContext, settings, pendingPlan.plan)
 
       markNeedsLayoutResolve()
-      executeCommands(response, useCanvasStore.getState())
+      let queryResults = executeCommands(response, useCanvasStore.getState())
+
+      // Multi-round loop: answer canvas.query commands with full block content
+      // and let the agent finish the task with that knowledge.
+      let round = 1
+      while (queryResults.length > 0 && round < MAX_QUERY_ROUNDS) {
+        useCanvasStore.getState().setAgentStatusText('Agent 正在查看画布内容...')
+        canvasContext = [
+          canvasContext,
+          formatQueryResults(queryResults),
+          'The user is waiting. Use the query results to finish the task: emit the remaining canvas commands and your final message. Do not query the same blocks again.',
+        ].join('\n\n')
+        response = await executeAgentPlan(pendingPlan.userInput, canvasContext, settings, pendingPlan.plan)
+        queryResults = executeCommands(response, useCanvasStore.getState())
+        round++
+      }
+
       setPendingPlan(null)
       appendMessage(createTextMessage('ai', response.message))
     } catch (error) {

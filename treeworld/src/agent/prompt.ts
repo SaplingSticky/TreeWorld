@@ -75,6 +75,15 @@ Response schema:
       }
     },
     {
+      "type": "canvas.lock",
+      "id": "block id",
+      "locked": true
+    },
+    {
+      "type": "canvas.delete",
+      "id": "block id to delete"
+    },
+    {
       "type": "canvas.group",
       "collectionId": "collection block id",
       "blockIds": ["child block id"]
@@ -106,7 +115,10 @@ ${SHARED_CANVAS_RULES}
 - For multiple blocks, offset each block by 40 pixels on x and y.
 - For complex tasks, create a collection first, then create child blocks with ids, then group them into the collection.
 - Use ids such as "research-collection", "research-summary", and "research-actions" only within the current response.
-- If canvas context says a block is locked, do not update, move, resize, or group that locked block. Create a note explaining that it must be unlocked first.
+- If canvas context says a block is locked, do not update, move, resize, group, or delete that locked block. Create a note explaining that it must be unlocked first.
+- Use canvas.delete only when the user explicitly asked to remove a block. Deleting a collection ungroups its children (they stay on the canvas).
+- Use canvas.query to fetch the FULL content of a block when the context shows "contentTruncated=true" or when you need details beyond the 80-char preview. The system answers queries in a follow-up message, then you finish the remaining commands.
+- Do not re-query blocks you already queried in this conversation round. Query at most 2 blocks per response.
 - Keep content useful and concise.
 - If Web search context is present, ALWAYS append a "Sources" section at the end of each markdown block that uses search data. Format: "Sources: [Title](URL)". Never invent URLs — only use URLs from the search context.
 `.trim()

@@ -42,13 +42,18 @@ function isValidCommand(command: unknown): command is CanvasCommand {
     maybeCommand.type === 'canvas.update' ||
     maybeCommand.type === 'canvas.move' ||
     maybeCommand.type === 'canvas.resize' ||
-    maybeCommand.type === 'canvas.lock'
+    maybeCommand.type === 'canvas.lock' ||
+    maybeCommand.type === 'canvas.delete'
   ) {
     return typeof maybeCommand.id === 'string'
   }
 
   if (maybeCommand.type === 'canvas.group') {
     return typeof maybeCommand.collectionId === 'string' && Array.isArray(maybeCommand.blockIds)
+  }
+
+  if (maybeCommand.type === 'canvas.query') {
+    return typeof maybeCommand.id === 'string'
   }
 
   return false

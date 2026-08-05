@@ -7,11 +7,12 @@ interface Camera {
   zoom: number
 }
 
-interface CanvasCommandStore {
+export interface CanvasCommandStore {
   blocks: Record<string, Block>
   camera: Camera
   addBlock: (block: Block) => void
   updateBlock: (id: string, changes: Partial<Block>) => void
+  deleteBlock: (id: string) => void
 }
 
 const COLLECTION_PADDING = 24
@@ -188,6 +189,33 @@ function guardedUpdate(id: string, changes: Partial<Block>, store: CanvasCommand
   }
 }
 
+function guardedDelete(id: string, store: CanvasCommandStore): void {
+  const block = store.blocks[id]
+
+  if (!block) {
+    return
+  }
+
+  if (block.locked) {
+    store.addBlock(createLockWarning(block))
+    return
+  }
+
+  // Deleting a collection orphans its children instead of deleting them.
+  if (block.type === 'collection') {
+    for (const child of Object.values(store.blocks)) {
+      if (child.parentCollectionId === id) {
+        guardedUpdate(child.id, { parentCollectionId: null }, store)
+      }
+    }
+  }
+
+  store.deleteBlock(id)
+  const next = { ...store.blocks }
+  delete next[id]
+  store.blocks = next
+}
+
 function fitCollectionToChildren(collectionId: string, store: CanvasCommandStore): void {
   const collection = store.blocks[collectionId]
 
@@ -222,12 +250,18 @@ function fitCollectionToChildren(collectionId: string, store: CanvasCommandStore
   )
 }
 
+export interface QueryResult {
+  id: string
+  block: Block | null
+}
+
 function executeCommand(
   command: CanvasCommand,
   index: number,
   store: CanvasCommandStore,
   createdBlockIds: string[] = [],
-  layoutGroupId = crypto.randomUUID()
+  layoutGroupId = crypto.randomUUID(),
+  queryResults: QueryResult[] = []
 ): void {
   if (command.type === 'canvas.batch') {
     const batchedCreatedBlockIds: string[] = []
@@ -235,11 +269,11 @@ function executeCommand(
     const otherCommands = command.commands.filter((batchedCommand) => batchedCommand.type !== 'canvas.create')
 
     createCommands.forEach((batchedCommand, batchedIndex) => {
-      executeCommand(batchedCommand, batchedIndex, store, batchedCreatedBlockIds, layoutGroupId)
+      executeCommand(batchedCommand, batchedIndex, store, batchedCreatedBlockIds, layoutGroupId, queryResults)
     })
     layoutCreatedBlocks(batchedCreatedBlockIds, store)
     otherCommands.forEach((batchedCommand, batchedIndex) => {
-      executeCommand(batchedCommand, batchedIndex, store, batchedCreatedBlockIds, layoutGroupId)
+      executeCommand(batchedCommand, batchedIndex, store, batchedCreatedBlockIds, layoutGroupId, queryResults)
     })
     return
   }
@@ -273,6 +307,16 @@ function executeCommand(
     return
   }
 
+  if (command.type === 'canvas.delete') {
+    guardedDelete(command.id, store)
+    return
+  }
+
+  if (command.type === 'canvas.query') {
+    queryResults.push({ id: command.id, block: store.blocks[command.id] ?? null })
+    return
+  }
+
   if (command.type === 'canvas.group') {
     const collection = store.blocks[command.collectionId]
 
@@ -296,19 +340,53 @@ export function queryBlock(id: string, store: CanvasCommandStore): Block | null 
   return store.blocks[id] ?? null
 }
 
-export function executeCommands(response: AgentResponse, store: CanvasCommandStore): void {
+export function executeCommands(response: AgentResponse, store: CanvasCommandStore): QueryResult[] {
   const layoutGroupId = crypto.randomUUID()
   const createdBlockIds: string[] = []
+  const queryResults: QueryResult[] = []
   const createCommands = response.commands.filter((command) => command.type === 'canvas.create')
   const otherCommands = response.commands.filter((command) => command.type !== 'canvas.create')
 
   createCommands.forEach((command, index) => {
-    executeCommand(command, index, store, createdBlockIds, layoutGroupId)
+    executeCommand(command, index, store, createdBlockIds, layoutGroupId, queryResults)
   })
   layoutCreatedBlocks(createdBlockIds, store)
   otherCommands.forEach((command, index) => {
-    executeCommand(command, index, store, createdBlockIds, layoutGroupId)
+    executeCommand(command, index, store, createdBlockIds, layoutGroupId, queryResults)
   })
+
+  return queryResults
+}
+
+const MAX_QUERY_BLOCK_CHARS = 2000
+
+export function formatQueryResults(queryResults: QueryResult[]): string {
+  if (queryResults.length === 0) {
+    return ''
+  }
+
+  const lines = queryResults.map((result) => {
+    const block = result.block
+
+    if (!block) {
+      return `- id=${result.id}; NOT FOUND (this block does not exist on the canvas)`
+    }
+
+    const fullContent = block.content.slice(0, MAX_QUERY_BLOCK_CHARS)
+
+    return [
+      `- id=${block.id}`,
+      `type=${block.type}`,
+      `title=${block.title || 'Untitled'}`,
+      `position=(${Math.round(block.x)}, ${Math.round(block.y)})`,
+      `size=${Math.round(block.width)}x${Math.round(block.height)}`,
+      `locked=${block.locked}`,
+      `parentCollectionId=${block.parentCollectionId || 'none'}`,
+      `content=${fullContent || '(empty)'}`,
+    ].join('; ')
+  })
+
+  return `Block query results:\n${lines.join('\n')}`
 }
 
 const MAX_CONTEXT_CHARS = 4000
@@ -355,6 +433,7 @@ export function buildCanvasContext(blocks: Record<string, Block>, camera?: Camer
 
   for (const block of blocksToProcess) {
     const contentPreview = block.content.replace(/\s+/g, ' ').slice(0, 80)
+    const isTruncated = block.content.replace(/\s+/g, ' ').length > 80
     const line = [
       `id=${block.id}`,
       `type=${block.type}`,
@@ -364,6 +443,7 @@ export function buildCanvasContext(blocks: Record<string, Block>, camera?: Camer
       `locked=${block.locked}`,
       `parentCollectionId=${block.parentCollectionId || 'none'}`,
       `content=${contentPreview || '(empty)'}`,
+      ...(isTruncated ? ['contentTruncated=true'] : []),
     ].join('; ')
 
     if (totalChars + line.length + 1 > MAX_CONTEXT_CHARS) {

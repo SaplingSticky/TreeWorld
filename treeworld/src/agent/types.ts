@@ -51,6 +51,11 @@ export interface CanvasLockCommand {
   locked: boolean
 }
 
+export interface CanvasDeleteCommand {
+  type: 'canvas.delete'
+  id: string
+}
+
 export interface CanvasGroupCommand {
   type: 'canvas.group'
   collectionId: string
@@ -73,6 +78,7 @@ export type CanvasCommand =
   | CanvasMoveCommand
   | CanvasResizeCommand
   | CanvasLockCommand
+  | CanvasDeleteCommand
   | CanvasGroupCommand
   | CanvasBatchCommand
   | CanvasQueryCommand
