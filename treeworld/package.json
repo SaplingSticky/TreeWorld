@@ -17,7 +17,10 @@
     "test:watch": "vitest",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && tsc -p tsconfig.electron.json && electron .\"",
     "electron:build": "vite build && tsc -p tsconfig.electron.json && electron-builder",
-    "electron:build:win": "vite build && tsc -p tsconfig.electron.json && electron-builder --win"
+    "electron:build:win": "vite build && tsc -p tsconfig.electron.json && electron-builder --win",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",
@@ -32,6 +35,7 @@
   "main": "electron-dist/main.js",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@tauri-apps/cli": "^2.11.4",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
