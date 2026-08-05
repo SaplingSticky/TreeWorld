@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { LAYOUT_GAP_X, LAYOUT_GAP_Y, arrangeIntoGrid, computeCollectionBounds } from './canvas/layout'
 import type { AgentProvider, AgentSettings } from './agent/types'
 
 export type BlockType = 'markdown' | 'note' | 'bubble' | 'html' | 'image' | 'collection' | 'svg' | 'code' | 'table' | 'link' | 'canvas2d'
@@ -97,11 +98,6 @@ const ACTIVE_CANVAS_KEY = 'treeworld:activeCanvasId'
 const CANVAS_THEME_KEY = 'treeworld.canvasTheme'
 const DEFAULT_CAMERA: Camera = { x: 0, y: 0, zoom: 1 }
 const BLOCK_TYPES: BlockType[] = ['markdown', 'note', 'bubble', 'html', 'image', 'collection', 'svg', 'code', 'table', 'link', 'canvas2d']
-const COLLECTION_PADDING = 24
-const COLLECTION_HEADER_HEIGHT = 42
-const LAYOUT_GAP_X = 36
-const LAYOUT_GAP_Y = 34
-const LAYOUT_COLUMNS = 2
 
 let saveTimer: number | undefined
 let needsLayoutResolve = false
@@ -368,37 +364,8 @@ function hasBlockOverlaps(blocks: Block[]): boolean {
 }
 
 function arrangeBlocksIntoGrid(blocks: Block[]): Record<string, Pick<Block, 'x' | 'y'>> {
-  if (blocks.length <= 1) {
-    return {}
-  }
-
-  const orderedBlocks = [...blocks].sort((a, b) => a.createdAt - b.createdAt || a.y - b.y || a.x - b.x)
-  const minX = Math.min(...orderedBlocks.map((block) => block.x))
-  const minY = Math.min(...orderedBlocks.map((block) => block.y))
-  const columnWidths = Array.from({ length: LAYOUT_COLUMNS }, (_, column) =>
-    Math.max(0, ...orderedBlocks.filter((_, index) => index % LAYOUT_COLUMNS === column).map((block) => block.width))
-  )
-  const columnX = columnWidths.reduce<number[]>((positions, _width, index) => {
-    if (index === 0) {
-      return [minX]
-    }
-
-    return [...positions, positions[index - 1] + columnWidths[index - 1] + LAYOUT_GAP_X]
-  }, [])
-  const rowY: number[] = []
-
-  return orderedBlocks.reduce<Record<string, Pick<Block, 'x' | 'y'>>>((positions, block, index) => {
-    const row = Math.floor(index / LAYOUT_COLUMNS)
-    const column = index % LAYOUT_COLUMNS
-    const x = columnX[column]
-    const y = rowY[row] ?? minY
-
-    positions[block.id] = { x, y }
-    rowY[row] = Math.max(rowY[row] ?? minY, y)
-    rowY[row + 1] = Math.max(rowY[row + 1] ?? minY, y + block.height + LAYOUT_GAP_Y)
-
-    return positions
-  }, {})
+  const positions = arrangeIntoGrid(blocks)
+  return Object.fromEntries(positions)
 }
 
 export const useCanvasStore = create<CanvasState>((set, get) => ({
@@ -471,6 +438,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     scheduleActiveCanvasSave(get)
   },
   moveCollection: (id, dx, dy) => {
+    const prev = get().blocks
     set((state) => {
       const blocks = { ...state.blocks }
       const collection = blocks[id]
@@ -489,7 +457,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         }
       })
 
-      return { blocks }
+      return { blocks, undoStack: [...state.undoStack, prev].slice(-50), redoStack: [] }
     })
     scheduleActiveCanvasSave(get)
   },
@@ -507,14 +475,13 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         return state
       }
 
-      const minX = Math.min(...children.map((block) => block.x))
-      const minY = Math.min(...children.map((block) => block.y))
-      const maxX = Math.max(...children.map((block) => block.x + block.width))
-      const maxY = Math.max(...children.map((block) => block.y + block.height))
-      const nextX = minX - COLLECTION_PADDING
-      const nextY = minY - COLLECTION_HEADER_HEIGHT
-      const nextWidth = maxX - nextX + COLLECTION_PADDING
-      const nextHeight = maxY - nextY + COLLECTION_PADDING
+      const bounds = computeCollectionBounds(children)
+
+      if (!bounds) {
+        return state
+      }
+
+      const { x: nextX, y: nextY, width: nextWidth, height: nextHeight } = bounds
 
       if (
         Math.abs(collection.x - nextX) < 1 &&
@@ -840,6 +807,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       width: block.width,
       height: block.height,
       heightMode: block.heightMode,
+      layoutGroupId: block.layoutGroupId,
       content: block.content,
       locked: false,
       parentCollectionId: block.parentCollectionId,
@@ -857,3 +825,32 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     set({ frontBlockId: null })
   },
 }))
+
+function flushPendingSave(): void {
+  if (saveTimer) {
+    window.clearTimeout(saveTimer)
+    saveTimer = undefined
+  }
+
+  const document = buildCurrentCanvasDocument(useCanvasStore.getState())
+
+  if (document) {
+    const metas = persistCanvasDocument(document)
+    useCanvasStore.setState({ canvasMetas: metas })
+  }
+}
+
+// Flush the debounced save when the tab/window is about to be hidden or
+// closed — otherwise the last 800ms of edits can be lost.
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', flushPendingSave)
+  window.addEventListener('pagehide', flushPendingSave)
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        flushPendingSave()
+      }
+    })
+  }
+}

@@ -1,4 +1,5 @@
 import type { Block } from '../store'
+import { arrangeIntoGrid, computeCollectionBounds } from '../canvas/layout'
 import type { AgentResponse, CanvasCommand } from './types'
 
 interface Camera {
@@ -14,12 +15,6 @@ export interface CanvasCommandStore {
   updateBlock: (id: string, changes: Partial<Block>) => void
   deleteBlock: (id: string) => void
 }
-
-const COLLECTION_PADDING = 24
-const COLLECTION_HEADER_HEIGHT = 42
-const GRID_GAP_X = 36
-const GRID_GAP_Y = 34
-const GRID_COLUMNS = 2
 
 function viewportCenter(camera: Camera): { x: number; y: number } {
   return {
@@ -123,31 +118,7 @@ function layoutCreatedBlocks(blockIds: string[], store: CanvasCommandStore): voi
     return
   }
 
-  const minX = Math.min(...blocks.map((block) => block.x))
-  const minY = Math.min(...blocks.map((block) => block.y))
-  const columnWidths = Array.from({ length: GRID_COLUMNS }, (_, column) =>
-    Math.max(0, ...blocks.filter((_, index) => index % GRID_COLUMNS === column).map((block) => block.width))
-  )
-  const columnX = columnWidths.reduce<number[]>((positions, _width, index) => {
-    if (index === 0) {
-      return [minX]
-    }
-
-    return [...positions, positions[index - 1] + columnWidths[index - 1] + GRID_GAP_X]
-  }, [])
-  const rowY: number[] = []
-  const positions = new Map<string, { x: number; y: number }>()
-
-  blocks.forEach((block, index) => {
-    const row = Math.floor(index / GRID_COLUMNS)
-    const column = index % GRID_COLUMNS
-    const x = columnX[column]
-    const y = rowY[row] ?? minY
-
-    positions.set(block.id, { x, y })
-    rowY[row] = Math.max(rowY[row] ?? minY, y)
-    rowY[row + 1] = Math.max(rowY[row + 1] ?? minY, y + block.height + GRID_GAP_Y)
-  })
+  const positions = arrangeIntoGrid(blocks, { sort: false })
 
   // Collision avoidance: shift the whole grid down until it no longer
   // overlaps blocks outside this layout group (existing user content or
@@ -270,14 +241,17 @@ function fitCollectionToChildren(collectionId: string, store: CanvasCommandStore
     return
   }
 
-  const minX = Math.min(...children.map((block) => block.x))
-  const minY = Math.min(...children.map((block) => block.y))
-  const maxX = Math.max(...children.map((block) => block.x + block.width))
-  const maxY = Math.max(...children.map((block) => block.y + block.height))
-  const nextX = Math.min(collection.x, minX - COLLECTION_PADDING)
-  const nextY = Math.min(collection.y, minY - COLLECTION_HEADER_HEIGHT)
-  const nextWidth = Math.max(collection.width, maxX - nextX + COLLECTION_PADDING)
-  const nextHeight = Math.max(collection.height, maxY - nextY + COLLECTION_PADDING)
+  const bounds = computeCollectionBounds(children)
+
+  if (!bounds) {
+    return
+  }
+
+  // Grow-only policy: the agent never shrinks a collection it sized.
+  const nextX = Math.min(collection.x, bounds.x)
+  const nextY = Math.min(collection.y, bounds.y)
+  const nextWidth = Math.max(collection.width, bounds.width)
+  const nextHeight = Math.max(collection.height, bounds.height)
 
   guardedUpdate(
     collectionId,

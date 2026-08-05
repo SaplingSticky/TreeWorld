@@ -5,6 +5,8 @@ if (typeof window === 'undefined') {
     clearTimeout: globalThis.clearTimeout,
     innerWidth: 1920,
     innerHeight: 1080,
+    addEventListener: () => {},
+    removeEventListener: () => {},
   }
 }
 
